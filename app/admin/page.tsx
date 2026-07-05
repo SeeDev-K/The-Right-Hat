@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -75,17 +76,25 @@ export default function AdminPage() {
   return (
     <main className="py-20">
       <div className="container">
-        <div className="flex flex-wrap items-start justify-between gap-5">
+        <div className="grid gap-8 lg:grid-cols-[.9fr_1.1fr] lg:items-center">
           <div>
             <span className="badge">Admin</span>
             <h1 className="mt-5 max-w-3xl text-5xl font-black text-slate-950">TRH control center.</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">Authenticated dashboard for contacts, academy, media and community operations.</p>
           </div>
-          <div className="card p-4 text-sm text-slate-600">
+          <div className="card overflow-hidden p-3">
+            <div className="relative aspect-[16/9] overflow-hidden rounded-[20px] bg-blue-50">
+              <Image src="/assets/trh/admin/admin-dashboard-preview.png" alt="TRH admin dashboard preview" fill priority className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 card flex flex-wrap items-center justify-between gap-4 p-4 text-sm text-slate-600">
+          <div>
             <p className="font-bold text-slate-950">Signed in</p>
             <p>{userEmail || 'Loading...'}</p>
-            <button onClick={signOut} className="mt-3 text-[var(--primary)]">Sign out</button>
           </div>
+          <button onClick={signOut} className="font-black text-[var(--primary)]">Sign out</button>
         </div>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -103,7 +112,17 @@ export default function AdminPage() {
 
           {loading && <div className="card p-6 text-slate-600">Loading contacts...</div>}
           {error && <div className="card p-6 text-red-600">{error}</div>}
-          {!loading && !error && contacts.length === 0 && <div className="card p-6 text-slate-600">No contact requests yet.</div>}
+          {!loading && !error && contacts.length === 0 && (
+            <div className="card grid gap-6 p-6 text-slate-600 md:grid-cols-[220px_1fr] md:items-center">
+              <div className="relative aspect-square overflow-hidden rounded-2xl bg-blue-50">
+                <Image src="/assets/trh/admin/admin-empty-state.png" alt="No contacts yet" fill className="object-cover" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-950">No contact requests yet.</h3>
+                <p className="mt-3 leading-7">Once a visitor submits the contact form, the request will appear here.</p>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4">
             {contacts.map((contact) => (
