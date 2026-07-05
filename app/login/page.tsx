@@ -21,9 +21,9 @@ export default function LoginPage() {
     const email = String(formData.get('email') || '').trim()
     const password = String(formData.get('password') || '')
 
-    const supabase = createBrowserSupabaseClient()
+    const supabase = await createBrowserSupabaseClient()
     if (!supabase) {
-      setError('Supabase public environment variables are missing in Vercel.')
+      setError('Supabase public configuration is missing. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel, then redeploy.')
       setLoading(false)
       return
     }
