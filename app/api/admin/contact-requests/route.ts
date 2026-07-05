@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseServerConfig, verifyBearerToken } from '@/lib/supabase/server'
+import { getSupabaseServerConfig, isAdminUser, verifyBearerToken } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   try {
@@ -7,6 +7,11 @@ export async function GET(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const allowed = await isAdminUser(user.id)
+    if (!allowed) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { url, serviceRoleKey } = getSupabaseServerConfig()
