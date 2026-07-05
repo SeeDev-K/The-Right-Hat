@@ -1,11 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useState } from 'react'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 
 export default function NewPasswordPage() {
-  const supabase = useMemo(() => createBrowserSupabaseClient(), [])
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,6 +14,13 @@ export default function NewPasswordPage() {
     setLoading(true)
     setStatus('')
     setError('')
+
+    const supabase = createBrowserSupabaseClient()
+    if (!supabase) {
+      setError('Supabase public environment variables are missing in Vercel.')
+      setLoading(false)
+      return
+    }
 
     const password = String(new FormData(event.currentTarget).get('password') || '')
     const { error: updateError } = await supabase.auth.updateUser({ password })
@@ -34,13 +40,13 @@ export default function NewPasswordPage() {
     <main className="py-20">
       <div className="container max-w-lg">
         <span className="badge">Password</span>
-        <h1 className="mt-5 text-4xl font-black">Choose a new password.</h1>
+        <h1 className="mt-5 text-4xl font-black text-slate-950">Choose a new password.</h1>
         <form onSubmit={onSubmit} className="card mt-8 grid gap-5 p-7">
           <label>New password<input name="password" type="password" required minLength={8} placeholder="Minimum 8 characters" /></label>
           <button disabled={loading} className="btn btn-primary" type="submit">{loading ? 'Updating...' : 'Update password'}</button>
-          {status && <p className="text-sm text-emerald-300">{status}</p>}
-          {error && <p className="text-sm text-red-300">{error}</p>}
-          <Link href="/login" className="text-[var(--gold-soft)]">Back to login</Link>
+          {status && <p className="text-sm text-emerald-600">{status}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <Link href="/login" className="text-[var(--primary)]">Back to login</Link>
         </form>
       </div>
     </main>
