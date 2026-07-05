@@ -23,6 +23,12 @@ export default function SignupPage() {
     const role = String(formData.get('role') || '').trim()
 
     const supabase = createBrowserSupabaseClient()
+    if (!supabase) {
+      setError('Supabase public environment variables are missing in Vercel.')
+      setLoading(false)
+      return
+    }
+
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -44,16 +50,16 @@ export default function SignupPage() {
     <main className="py-20">
       <div className="container max-w-lg">
         <span className="badge">Signup</span>
-        <h1 className="mt-5 text-4xl font-black">Request TRH access.</h1>
+        <h1 className="mt-5 text-4xl font-black text-slate-950">Request TRH access.</h1>
         <form onSubmit={onSubmit} className="card mt-8 grid gap-5 p-7">
           <label>Name<input name="full_name" required placeholder="Full name" /></label>
           <label>Email<input name="email" type="email" required placeholder="you@company.com" /></label>
           <label>Password<input name="password" type="password" required minLength={8} placeholder="Minimum 8 characters" /></label>
           <label>Role<input name="role" placeholder="Founder, analyst, student..." /></label>
           <button disabled={loading} className="btn btn-primary" type="submit">{loading ? 'Creating...' : 'Request access'}</button>
-          {status && <p className="text-sm text-emerald-300">{status}</p>}
-          {error && <p className="text-sm text-red-300">{error}</p>}
-          <Link href="/login" className="text-[var(--gold-soft)]">Already have access?</Link>
+          {status && <p className="text-sm text-emerald-600">{status}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <Link href="/login" className="text-[var(--primary)]">Already have access?</Link>
         </form>
       </div>
     </main>
