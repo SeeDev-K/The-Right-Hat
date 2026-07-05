@@ -13,6 +13,21 @@ Premium cybersecurity, academy, media and community platform built with Next.js.
 - Supabase contact CRM
 - Supabase-ready content and community schemas
 
+## Assets
+
+TRH production assets are expected under:
+
+```txt
+public/assets/trh/
+  logos/
+  hero/
+  sections/
+  articles/
+  icons/
+  social/
+  admin/
+```
+
 ## Local development
 
 ```bash
