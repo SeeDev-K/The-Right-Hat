@@ -9,8 +9,8 @@ const pillars = [
 
 const stats = [
   ['4', 'strategic pillars'],
-  ['24/7', 'readiness mindset'],
-  ['100%', 'clarity-first delivery'],
+  ['Auth', 'Supabase ready'],
+  ['Admin', 'CRM foundation'],
 ]
 
 export default function HomePage() {
@@ -25,11 +25,13 @@ export default function HomePage() {
               Cybersecurity, intelligence and training for teams that need to move with confidence.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-              The Right Hat brings offensive security, defensive operations, professional academy, media and community into one premium cybersecurity brand built for clarity before crisis.
+              The Right Hat brings offensive security, defensive operations, academy, media, community, Supabase authentication and an admin CRM into one premium cybersecurity platform.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/contact" className="btn btn-primary">Book a consult</Link>
-              <Link href="/academy" className="btn btn-ghost">Explore academy</Link>
+              <Link href="/signup" className="btn btn-primary">Create account</Link>
+              <Link href="/login" className="btn btn-ghost">Login</Link>
+              <Link href="/contact" className="btn btn-ghost">Book consult</Link>
+              <Link href="/setup" className="btn btn-ghost">Setup checklist</Link>
             </div>
           </div>
           <div className="card relative overflow-hidden p-8">
@@ -38,7 +40,7 @@ export default function HomePage() {
               <div>
                 <div className="mx-auto grid h-32 w-32 place-items-center rounded-[2rem] border border-[var(--border)] bg-white/5 text-4xl font-black text-[var(--gold-soft)] shadow-2xl">TRH</div>
                 <h2 className="mt-8 text-3xl font-black">The Right Hat</h2>
-                <p className="mx-auto mt-3 max-w-sm text-slate-400">A premium cybersecurity identity for operators, founders and decision makers.</p>
+                <p className="mx-auto mt-3 max-w-sm text-slate-400">Signup, login, account and protected admin CRM are now part of the deployed platform flow.</p>
               </div>
             </div>
           </div>
@@ -74,11 +76,14 @@ export default function HomePage() {
       <section className="py-20">
         <div className="container card grid gap-8 p-8 md:grid-cols-[1fr_auto] md:items-center md:p-12">
           <div>
-            <span className="badge">Next step</span>
-            <h2 className="mt-5 text-4xl font-black">Ready to turn TRH into a live operation?</h2>
-            <p className="mt-4 max-w-2xl text-slate-300">Connect GitHub to Vercel, create Supabase, add the environment variables and the platform becomes deployable with contact storage and future admin features.</p>
+            <span className="badge">Launch flow</span>
+            <h2 className="mt-5 text-4xl font-black">Create your account, authenticate, then open the admin CRM.</h2>
+            <p className="mt-4 max-w-2xl text-slate-300">The platform now has visible routes for signup, login, account, admin, setup and password recovery.</p>
           </div>
-          <Link href="/contact" className="btn btn-primary">Start project</Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/signup" className="btn btn-primary">Signup</Link>
+            <Link href="/admin" className="btn btn-ghost">Admin</Link>
+          </div>
         </div>
       </section>
     </main>
