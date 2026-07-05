@@ -42,3 +42,19 @@ export async function verifyBearerToken(authorizationHeader: string | null): Pro
 
   return { id: user.id, email: user.email }
 }
+
+export async function isAdminUser(userId: string) {
+  const { url, serviceRoleKey } = getSupabaseServerConfig()
+  const response = await fetch(`${url}/rest/v1/admin_profiles?select=id,role&user_id=eq.${userId}&role=in.(owner,admin)&limit=1`, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    cache: 'no-store',
+  })
+
+  if (!response.ok) return false
+
+  const rows = await response.json()
+  return Array.isArray(rows) && rows.length > 0
+}
