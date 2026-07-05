@@ -1,0 +1,1 @@
+export default function Page() { return <main className="py-20"><div className="container"><h1 className="text-5xl font-black">Terms</h1><p className="mt-6 text-slate-300">Final wording before launch.</p></div></main> }
