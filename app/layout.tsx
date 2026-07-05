@@ -20,13 +20,15 @@ const nav = [
   ['Academy', '/academy'],
   ['Media', '/media'],
   ['Community', '/community'],
-  ['About', '/about'],
-  ['Contact', '/contact'],
+  ['Pricing', '/pricing'],
+  ['FAQ', '/faq'],
+  ['Setup', '/setup'],
 ]
 
 const authNav = [
   ['Login', '/login'],
   ['Signup', '/signup'],
+  ['Account', '/account'],
   ['Admin', '/admin'],
 ]
 
@@ -52,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="border-t border-[var(--border)] py-10 text-sm text-slate-400">
           <div className="container grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div><strong className="block text-base text-white">TRH — The Right Hat</strong><span>Premium cybersecurity, training, intelligence and community operations.</span></div>
-            <div className="flex flex-wrap gap-4"><Link href="/privacy">Privacy</Link><Link href="/tos">Legal</Link><Link href="/security">Security</Link><Link href="/signup">Signup</Link><Link href="/login">Login</Link><Link href="/account">Account</Link><Link href="/admin">Admin</Link></div>
+            <div className="flex flex-wrap gap-4"><Link href="/about">About</Link><Link href="/collaborations">Collaborations</Link><Link href="/roadmap">Roadmap</Link><Link href="/privacy">Privacy</Link><Link href="/tos">Legal</Link><Link href="/security">Security</Link><Link href="/forgot-password">Password</Link><Link href="/account">Account</Link><Link href="/admin">Admin</Link></div>
           </div>
         </footer>
         {process.env.NODE_ENV === 'production' && <Analytics />}
