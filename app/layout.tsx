@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   },
   description:
     'The Right Hat is a premium cybersecurity, academy, media and community platform for teams that need clarity before crisis.',
-  icons: { icon: '/favicon.svg' },
+  icons: { icon: '/assets/trh/logos/favicon.png' },
 }
 
 export const viewport: Viewport = { colorScheme: 'light', themeColor: '#f8fbff' }
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/90 backdrop-blur-xl">
           <div className="container flex min-h-20 items-center justify-between gap-5 py-4">
             <Link href="/" className="inline-flex items-center" aria-label="TRH home">
-              <Image src="/images/trh-logo-header.svg" alt="TRH — The Right Hat" width={148} height={40} priority className="h-10 w-auto" />
+              <Image src="/assets/trh/logos/trh-logo-header.png" alt="TRH — The Right Hat" width={210} height={78} priority className="h-12 w-auto object-contain" />
             </Link>
             <nav className="hidden items-center gap-7 text-sm font-bold text-slate-600 lg:flex">
               {nav.map(([label, href]) => <Link key={href} href={href} className="hover:text-[var(--primary)]">{label}</Link>)}
@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="border-t border-[var(--border)] bg-white py-14 text-sm text-slate-600">
           <div className="container grid gap-10 md:grid-cols-[1.3fr_2fr]">
             <div>
-              <Image src="/images/trh-logo-footer.svg" alt="TRH — The Right Hat" width={148} height={40} className="h-10 w-auto" />
+              <Image src="/assets/trh/logos/trh-logo-footer.png" alt="TRH — The Right Hat" width={210} height={78} className="h-12 w-auto object-contain" />
               <p className="mt-5 max-w-sm leading-7">Elite cybersecurity, media, community, and academy — arming organizations and practitioners to wear the right hat.</p>
             </div>
             <div className="grid gap-6 sm:grid-cols-3">
