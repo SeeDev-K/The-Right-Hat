@@ -2,74 +2,103 @@
 
 :root {
   --background: #f8fbff;
-  --foreground: #07111f;
-  --muted: #5d6b82;
-  --border: rgba(15, 35, 65, 0.14);
-  --card: rgba(255, 255, 255, 0.88);
-  --primary: #2f6fff;
-  --primary-dark: #0d3ea8;
+  --foreground: #061126;
+  --muted: #52627a;
+  --border: rgba(15, 35, 65, 0.13);
+  --card: rgba(255, 255, 255, 0.9);
+  --primary: #246bff;
+  --primary-dark: #0b348f;
   --gold: #d8a93a;
   --cyan: #12b8ff;
+  --font-heading: "Sora", "Avenir Next", "Montserrat", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", "Avenir Next", "Segoe UI", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
-  background: #f8fbff;
+  background: radial-gradient(circle at 78% 0%, rgba(36,107,255,.10), transparent 30rem), #f8fbff;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  letter-spacing: -0.012em;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
 }
 
 a { color: inherit; text-decoration: none; }
-.container { width: min(1180px, calc(100% - 32px)); margin-inline: auto; }
+.container { width: min(1240px, calc(100% - 32px)); margin-inline: auto; }
+
+h1, h2, h3, h4, h5, h6, nav a, .btn, .badge {
+  font-family: var(--font-heading);
+}
+
+h1 {
+  letter-spacing: -0.065em;
+  line-height: .96;
+}
+
+h2 {
+  letter-spacing: -0.055em;
+  line-height: 1.02;
+}
+
+h3 {
+  letter-spacing: -0.035em;
+}
+
+p {
+  line-height: 1.78;
+}
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: .5rem;
-  border-radius: 12px;
-  padding: .82rem 1.15rem;
-  font-weight: 800;
-  transition: .2s ease;
+  border-radius: 16px;
+  padding: .9rem 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
 }
-.btn:hover { transform: translateY(-1px); }
-.btn-primary { background: linear-gradient(135deg, var(--primary), #5b8cff); color: white; box-shadow: 0 14px 32px rgba(47,111,255,.22); }
-.btn-ghost { border: 1px solid var(--border); background: rgba(255,255,255,.7); color: #07111f; }
+.btn:hover { transform: translateY(-2px); }
+.btn-primary { background: linear-gradient(135deg, #246bff, #5b8cff); color: white; box-shadow: 0 20px 45px rgba(36,107,255,.25); }
+.btn-ghost { border: 1px solid rgba(15,35,65,.14); background: rgba(255,255,255,.78); color: #061126; box-shadow: 0 14px 36px rgba(15,35,65,.06); }
 
 .card {
   border: 1px solid var(--border);
   background: var(--card);
-  border-radius: 24px;
-  box-shadow: 0 22px 70px rgba(15, 35, 65, .08);
+  border-radius: 28px;
+  box-shadow: 0 28px 80px rgba(15, 35, 65, .08);
 }
 .badge {
   display: inline-flex;
   align-items: center;
   gap: .45rem;
-  border: 1px solid rgba(47,111,255,.18);
-  background: rgba(47,111,255,.07);
+  border: 1px solid rgba(36,107,255,.18);
+  background: rgba(36,107,255,.07);
   color: var(--primary);
   border-radius: 999px;
-  padding: .35rem .75rem;
-  font-size: .75rem;
+  padding: .42rem .82rem;
+  font-size: .72rem;
   font-weight: 900;
-  letter-spacing: .14em;
+  letter-spacing: .16em;
   text-transform: uppercase;
 }
 .grid-lines {
-  background-image: linear-gradient(rgba(15,35,65,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(15,35,65,.08) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(15,35,65,.075) 1px, transparent 1px), linear-gradient(90deg, rgba(15,35,65,.075) 1px, transparent 1px);
   background-size: 64px 64px;
 }
 input, textarea {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: rgba(255,255,255,.86);
+  background: rgba(255,255,255,.88);
   color: var(--foreground);
-  padding: .9rem 1rem;
+  padding: .95rem 1rem;
   outline: none;
+  font-family: var(--font-body);
 }
-input:focus, textarea:focus { border-color: rgba(47,111,255,.62); box-shadow: 0 0 0 4px rgba(47,111,255,.10); }
+input:focus, textarea:focus { border-color: rgba(36,107,255,.62); box-shadow: 0 0 0 4px rgba(36,107,255,.10); }
 label { display: grid; gap: .45rem; color: #20304a; font-weight: 800; }
