@@ -1,20 +1,51 @@
-import Link from 'next/link'
+'use client'
 
-export const metadata = { title: 'Login' }
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { FormEvent, useState } from 'react'
+import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 
 export default function LoginPage() {
+  const router = useRouter()
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
+    setError('')
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const email = String(formData.get('email') || '').trim()
+    const password = String(formData.get('password') || '')
+
+    const supabase = createBrowserSupabaseClient()
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+
+    setLoading(false)
+
+    if (signInError) {
+      setError(signInError.message)
+      return
+    }
+
+    router.push('/admin')
+    router.refresh()
+  }
+
   return (
     <main className="py-20">
       <div className="container max-w-lg">
         <span className="badge">Login</span>
         <h1 className="mt-5 text-4xl font-black">Access TRH admin.</h1>
-        <div className="card mt-8 grid gap-5 p-7">
-          <label>Email<input type="email" placeholder="admin@trh.ma" /></label>
-          <label>Password<input type="password" placeholder="••••••••" /></label>
-          <button className="btn btn-primary">Login preview</button>
-          <p className="text-sm text-slate-400">Supabase Auth will be connected in the next dev phase.</p>
+        <form onSubmit={onSubmit} className="card mt-8 grid gap-5 p-7">
+          <label>Email<input name="email" type="email" required placeholder="admin@trh.ma" /></label>
+          <label>Password<input name="password" type="password" required placeholder="Your password" /></label>
+          <button disabled={loading} className="btn btn-primary" type="submit">{loading ? 'Signing in...' : 'Login'}</button>
+          {error && <p className="text-sm text-red-300">{error}</p>}
           <Link href="/signup" className="text-[var(--gold-soft)]">Create an account</Link>
-        </div>
+        </form>
       </div>
     </main>
   )
