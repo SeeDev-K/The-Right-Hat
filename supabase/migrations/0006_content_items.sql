@@ -5,3 +5,5 @@ create table if not exists public.content_items (
   status text not null default 'draft',
   created_at timestamptz not null default now()
 );
+
+alter table public.content_items enable row level security;
