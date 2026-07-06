@@ -3,12 +3,21 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 
+type AcademyStatus = 'draft' | 'review' | 'published' | 'archived'
+
 type AcademyItem = {
   id: string
   title: string
-  status: string
+  status: AcademyStatus
   created_at?: string
 }
+
+const statusActions: { label: string; value: AcademyStatus }[] = [
+  { label: 'Draft', value: 'draft' },
+  { label: 'Review', value: 'review' },
+  { label: 'Publish', value: 'published' },
+  { label: 'Archive', value: 'archived' },
+]
 
 const defaultRows: AcademyItem[] = [
   { id: 'default-1', title: 'Cybersecurity Foundations', status: 'draft' },
@@ -21,6 +30,7 @@ export function SimpleAcademyBoard() {
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [permissionNotice, setPermissionNotice] = useState(false)
   const [usingFallback, setUsingFallback] = useState(true)
 
@@ -46,7 +56,7 @@ export function SimpleAcademyBoard() {
         setItems(defaultRows)
         setUsingFallback(true)
       } else {
-        setItems(data)
+        setItems(data as AcademyItem[])
         setUsingFallback(false)
       }
 
@@ -84,10 +94,39 @@ export function SimpleAcademyBoard() {
       return
     }
 
-    setItems((currentItems) => (usingFallback ? [data] : [data, ...currentItems]))
+    setItems((currentItems) => (usingFallback ? [data as AcademyItem] : [data as AcademyItem, ...currentItems]))
     setUsingFallback(false)
     setTitle('')
     setSaving(false)
+  }
+
+  async function updateAcademyStatus(itemId: string, status: AcademyStatus) {
+    setUpdatingId(itemId)
+    setPermissionNotice(false)
+
+    const supabase = await createBrowserSupabaseClient()
+    if (!supabase) {
+      setPermissionNotice(true)
+      setUpdatingId(null)
+      return
+    }
+
+    const { error } = await supabase
+      .from('content_items')
+      .update({ status })
+      .eq('id', itemId)
+      .eq('kind', 'academy')
+
+    if (error) {
+      setPermissionNotice(true)
+      setUpdatingId(null)
+      return
+    }
+
+    setItems((currentItems) =>
+      currentItems.map((item) => (item.id === itemId ? { ...item, status } : item)),
+    )
+    setUpdatingId(null)
   }
 
   return (
@@ -130,9 +169,10 @@ export function SimpleAcademyBoard() {
       )}
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-slate-800">
-        <div className="grid grid-cols-[1fr_120px] bg-slate-900 px-4 py-3 text-xs font-black uppercase tracking-[.16em] text-slate-500">
+        <div className="grid gap-4 bg-slate-900 px-4 py-3 text-xs font-black uppercase tracking-[.16em] text-slate-500 md:grid-cols-[1fr_120px_360px]">
           <span>Title</span>
           <span>Status</span>
+          <span>Workflow</span>
         </div>
 
         {loading ? (
@@ -140,11 +180,33 @@ export function SimpleAcademyBoard() {
         ) : (
           <div className="divide-y divide-slate-800">
             {items.map((item) => (
-              <article key={item.id} className="grid grid-cols-[1fr_120px] items-center gap-4 px-4 py-4">
+              <article key={item.id} className="grid items-center gap-4 px-4 py-4 md:grid-cols-[1fr_120px_360px]">
                 <h3 className="font-bold text-white">{item.title}</h3>
                 <span className="w-fit rounded-full border border-slate-700 px-3 py-1 text-xs font-black uppercase tracking-[.14em] text-amber-200">
                   {item.status || 'draft'}
                 </span>
+                <div className="flex flex-wrap gap-2">
+                  {statusActions.map((action) => {
+                    const isActive = item.status === action.value
+                    return (
+                      <button
+                        key={action.value}
+                        type="button"
+                        disabled={updatingId === item.id || isActive}
+                        onClick={() => updateAcademyStatus(item.id, action.value)}
+                        className={[
+                          'rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-[.12em] transition disabled:cursor-not-allowed',
+                          isActive
+                            ? 'border-amber-300 bg-amber-300 text-slate-950'
+                            : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-amber-300 hover:text-amber-200',
+                          updatingId === item.id && !isActive ? 'opacity-60' : '',
+                        ].join(' ')}
+                      >
+                        {action.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </article>
             ))}
           </div>
