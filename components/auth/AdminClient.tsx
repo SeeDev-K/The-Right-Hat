@@ -7,7 +7,7 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 
 type ContactRequest = { id: string; name: string; email: string; message: string; status: string; created_at: string; company?: string | null }
 type AuditEvent = { action: string; actor: string; at: string; severity: 'info' | 'warn' | 'ok' }
-const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
+const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
 export function AdminClient() {
