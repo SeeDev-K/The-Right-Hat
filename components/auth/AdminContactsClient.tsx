@@ -1,0 +1,73 @@
+'use client'
+
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
+
+type Contact = { id: string; name: string; email: string; company?: string | null; message: string; status?: string | null; created_at: string; source?: string | null }
+const statuses = ['all', 'new', 'in_progress', 'done', 'archived']
+
+export function AdminContactsClient() {
+  const router = useRouter()
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [token, setToken] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [query, setQuery] = useState('')
+  const [status, setStatus] = useState('all')
+  const [selected, setSelected] = useState<Contact | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      const supabase = await createBrowserSupabaseClient()
+      if (!supabase) { setError('Supabase configuration missing.'); setLoading(false); return }
+      const { data } = await supabase.auth.getSession()
+      if (!data.session) { router.replace('/admin/login'); return }
+      setToken(data.session.access_token)
+      const response = await fetch('/api/admin/contact-requests', { headers: { Authorization: `Bearer ${data.session.access_token}` }, cache: 'no-store' })
+      if (!response.ok) { setError('Unable to load contacts.'); setLoading(false); return }
+      const payload = await response.json()
+      setContacts(payload.items || [])
+      setLoading(false)
+    }
+    load()
+  }, [router])
+
+  const filtered = useMemo(() => contacts.filter((c) => {
+    const haystack = `${c.name} ${c.email} ${c.company || ''} ${c.message}`.toLowerCase()
+    const okQuery = haystack.includes(query.toLowerCase())
+    const okStatus = status === 'all' || (c.status || 'new') === status
+    return okQuery && okStatus
+  }), [contacts, query, status])
+
+  async function updateStatus(id: string, nextStatus: string) {
+    const response = await fetch('/api/admin/contact-requests', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: nextStatus }) })
+    if (!response.ok) return
+    const payload = await response.json()
+    setContacts((items) => items.map((item) => item.id === id ? { ...item, status: payload.item?.status || nextStatus } : item))
+    if (selected?.id === id) setSelected({ ...selected, status: payload.item?.status || nextStatus })
+  }
+
+  function exportCsv() {
+    const rows = [['name','email','company','status','created_at'], ...filtered.map((c) => [c.name, c.email, c.company || '', c.status || 'new', c.created_at])]
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"','""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'trh-contact-requests.csv'; a.click(); URL.revokeObjectURL(url)
+  }
+
+  return (
+    <main className="min-h-screen bg-[#070b12] p-5 text-white lg:p-10">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-wrap items-center justify-between gap-5"><div><Link href="/admin" className="text-sm font-black text-cyan-300">← Control Center</Link><h1 className="mt-4 text-5xl font-black tracking-[-.06em]">Contacts CRM</h1><p className="mt-3 text-slate-400">Search, filter, qualify and export incoming requests.</p></div><button onClick={exportCsv} className="rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950">Export CSV</button></div>
+        <div className="mt-8 grid gap-4 md:grid-cols-[1fr_220px]"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, email, company or message" className="border-white/10 bg-white/[.06] text-white placeholder:text-slate-500" /><select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-2xl border border-white/10 bg-[#0a0f1a] px-4 text-white">{statuses.map((s) => <option key={s}>{s}</option>)}</select></div>
+        {loading && <div className="mt-8 rounded-3xl border border-white/10 bg-white/[.05] p-8 text-slate-300">Loading contacts...</div>}
+        {error && <div className="mt-8 rounded-3xl border border-red-400/20 bg-red-500/10 p-8 text-red-200">{error}</div>}
+        {!loading && !error && <div className="mt-8 overflow-hidden rounded-[28px] border border-white/10 bg-white/[.05]"><table className="w-full text-left text-sm"><thead className="bg-white/[.04] text-xs uppercase tracking-widest text-slate-500"><tr><th className="p-4">Contact</th><th>Status</th><th>Source</th><th>Created</th><th>Action</th></tr></thead><tbody>{filtered.map((c) => <tr key={c.id} className="border-t border-white/10"><td className="p-4"><b className="text-white">{c.name}</b><p className="text-slate-400">{c.email}</p></td><td><span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-black text-cyan-200">{c.status || 'new'}</span></td><td className="text-slate-400">{c.source || 'website'}</td><td className="font-mono text-xs text-slate-500">{new Date(c.created_at).toLocaleString()}</td><td><button onClick={() => setSelected(c)} className="font-black text-cyan-300">Open</button></td></tr>)}</tbody></table></div>}
+      </div>
+      {selected && <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-xl border-l border-white/10 bg-[#0a0f1a] p-7 shadow-2xl"><button onClick={() => setSelected(null)} className="text-sm font-black text-slate-400">Close</button><h2 className="mt-6 text-3xl font-black">{selected.name}</h2><p className="mt-2 text-slate-400">{selected.email}{selected.company ? ` · ${selected.company}` : ''}</p><p className="mt-8 rounded-2xl border border-white/10 bg-white/[.04] p-5 text-slate-200">{selected.message}</p><div className="mt-8 grid grid-cols-2 gap-3">{statuses.filter((s) => s !== 'all').map((s) => <button key={s} onClick={() => updateStatus(selected.id, s)} className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-black text-slate-200 hover:bg-white/5">{s}</button>)}</div></aside>}
+    </main>
+  )
+}
