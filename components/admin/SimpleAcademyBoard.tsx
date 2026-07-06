@@ -28,7 +28,7 @@ export function SimpleAcademyBoard() {
     async function loadAcademyItems() {
       setLoading(true)
 
-      const supabase = createBrowserSupabaseClient()
+      const supabase = await createBrowserSupabaseClient()
       if (!supabase) {
         setItems(defaultRows)
         setUsingFallback(true)
@@ -65,7 +65,7 @@ export function SimpleAcademyBoard() {
     setSaving(true)
     setPermissionNotice(false)
 
-    const supabase = createBrowserSupabaseClient()
+    const supabase = await createBrowserSupabaseClient()
     if (!supabase) {
       setPermissionNotice(true)
       setSaving(false)
