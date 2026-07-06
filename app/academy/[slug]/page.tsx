@@ -1,3 +1,13 @@
+import Link from 'next/link'
+import { createClient } from '@supabase/supabase-js'
+
+type PublishedTrack = {
+  id: string
+  title: string
+  status: string
+  created_at?: string
+}
+
 const lessons: Record<string, { title: string; intro: string; body: string[] }> = {
   'soc-analyst-track': {
     title: 'SOC Analyst Track',
@@ -21,14 +31,48 @@ const lessons: Record<string, { title: string; intro: string; body: string[] }> 
   },
 }
 
+export const dynamic = 'force-dynamic'
+
+function slugify(value: string) {
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'academy-track'
+}
+
+async function loadPublishedTrack(slug: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLIC_ANON_KEY
+  if (!url || !anonKey) return null
+
+  const supabase = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
+  const { data, error } = await supabase
+    .from('content_items')
+    .select('id,title,status,created_at')
+    .eq('kind', 'academy')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return null
+  return (data as PublishedTrack[]).find((track) => slugify(track.title) === slug) || null
+}
+
 export default async function AcademyLessonPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const lesson = lessons[slug] || { title: 'TRH Academy Track', intro: 'This track is being prepared.', body: ['Program coming soon'] }
+  const dynamicTrack = await loadPublishedTrack(slug)
+  const lesson = dynamicTrack
+    ? {
+        title: dynamicTrack.title,
+        intro: 'This TRH Academy track is published from the control center and ready for public discovery.',
+        body: ['Program overview', 'Operational objectives', 'Practice labs', 'Certification roadmap'],
+      }
+    : lessons[slug] || { title: 'TRH Academy Track', intro: 'This track is being prepared.', body: ['Program coming soon'] }
 
   return (
     <main className="py-20">
       <div className="container max-w-5xl">
-        <span className="badge">Academy</span>
+        <Link href="/academy" className="text-sm font-black uppercase tracking-[.18em] text-[var(--primary)]">Back to Academy</Link>
+        <div className="mt-6"><span className="badge">Academy</span></div>
         <h1 className="mt-5 text-5xl font-black text-slate-950">{lesson.title}</h1>
         <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">{lesson.intro}</p>
         <div className="mt-10 grid gap-4 md:grid-cols-2">
