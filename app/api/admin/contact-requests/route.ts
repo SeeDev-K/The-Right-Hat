@@ -32,9 +32,11 @@ export async function POST(request: Request) {
     const body = await request.json()
     const id = String(body.id || '')
     const status = String(body.status || '')
+    const assigned_to_email = String(body.assigned_to_email || '')
     if (!id || !['new', 'in_progress', 'done', 'archived'].includes(status)) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const patch = assigned_to_email ? { status, assigned_to_email } : { status }
     const { url, serviceRoleKey } = getSupabaseServerConfig()
-    const response = await fetch(`${url}/rest/v1/contact_requests?id=eq.${id}`, { method: 'PATCH', headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}`, 'Content-Type': 'application/json', Prefer: 'return=representation' }, body: JSON.stringify({ status }) })
+    const response = await fetch(`${url}/rest/v1/contact_requests?id=eq.${id}`, { method: 'PATCH', headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}`, 'Content-Type': 'application/json', Prefer: 'return=representation' }, body: JSON.stringify(patch) })
     if (!response.ok) return NextResponse.json({ error: 'Could not update contact request' }, { status: 502 })
     const rows = await response.json()
     return NextResponse.json({ item: rows?.[0] || null })
