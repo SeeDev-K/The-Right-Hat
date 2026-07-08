@@ -1,17 +1,19 @@
-const events = [
-  ['Admin login', 'Session opened from staff portal', 'info'],
-  ['CRM read', 'Contact requests viewed from admin console', 'info'],
-  ['Status change', 'Contact qualification state updated', 'warning'],
-]
+import { AdminModuleGuard } from '@/components/admin/AdminModuleGuard'
+import { SimpleActivityBoard } from '@/components/admin/SimpleActivityBoard'
 
 export default function AdminActivityPage() {
   return (
-    <main className="min-h-screen bg-[#070b12] p-5 text-white lg:p-10">
+    <main className="min-h-screen bg-[#f5f7fb] p-5 text-slate-950 lg:p-10">
       <div className="mx-auto max-w-7xl">
-        <a href="/admin" className="text-sm font-black text-cyan-300">← Control Center</a>
-        <h1 className="mt-4 text-5xl font-black tracking-[-.06em]">Activity feed</h1>
-        <p className="mt-3 text-slate-400">Operational trace of staff activity and platform events.</p>
-        <div className="mt-8 grid gap-4">{events.map(([title, text, level]) => <article key={title} className="rounded-[28px] border border-white/10 bg-white/[.05] p-6"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl font-black">{title}</h2><span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-black text-cyan-200">{level}</span></div><p className="mt-3 text-slate-400">{text}</p></article>)}</div>
+        <a href="/admin" className="text-sm font-black text-blue-600">← Control Center</a>
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[.22em] text-blue-600">Audit trail</p>
+            <h1 className="mt-3 text-5xl font-black tracking-[-.06em] text-slate-950">Activity Center</h1>
+            <p className="mt-3 max-w-2xl text-slate-500">Review module activity, administrative events and operational history.</p>
+          </div>
+        </div>
+        <div className="mt-8"><AdminModuleGuard module="activity"><SimpleActivityBoard /></AdminModuleGuard></div>
       </div>
     </main>
   )
