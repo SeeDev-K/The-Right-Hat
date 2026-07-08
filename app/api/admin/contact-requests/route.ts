@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseServerConfig, isAdminUser, verifyBearerToken } from '@/lib/supabase/server'
+import { canAccessModuleServer, getSupabaseServerConfig, verifyBearerToken } from '@/lib/supabase/server'
 
-async function requireAdmin(request: Request) {
+async function requireCrmAccess(request: Request) {
   const user = await verifyBearerToken(request.headers.get('authorization'))
   if (!user) return null
-  return (await isAdminUser(user.id)) ? user : null
+  return (await canAccessModuleServer(user, 'crm')) ? user : null
 }
 
 export async function GET(request: Request) {
   try {
-    const user = await requireAdmin(request)
+    const user = await requireCrmAccess(request)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { url, serviceRoleKey } = getSupabaseServerConfig()
     const params = new URL(request.url).searchParams
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireAdmin(request)
+    const user = await requireCrmAccess(request)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await request.json()
     const id = String(body.id || '')
