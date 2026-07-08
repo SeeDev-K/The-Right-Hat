@@ -9,6 +9,7 @@ type ContactRequest = { id: string; name: string; email: string; message: string
 type ContentItem = { id: string; title: string; kind: string; status: string; created_at?: string }
 type AuditEvent = { action: string; actor: string; at: string; severity: 'info' | 'warn' | 'ok' }
 
+const staffAccessPath = '/trh-staff/access'
 const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Community','/admin/community'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
@@ -52,7 +53,7 @@ export function AdminClient() {
       if (!supabase) { setError('Supabase configuration is missing in Vercel.'); setLoading(false); return }
 
       const { data } = await supabase.auth.getSession()
-      if (!data.session) { router.replace('/admin/login'); return }
+      if (!data.session) { router.replace(staffAccessPath); return }
 
       setEmail(data.session.user.email || '')
 
@@ -97,7 +98,7 @@ export function AdminClient() {
   async function signOut() {
     const supabase = await createBrowserSupabaseClient()
     if (supabase) await supabase.auth.signOut()
-    router.replace('/admin/login')
+    router.replace(staffAccessPath)
   }
 
   const kpis = [
@@ -132,7 +133,7 @@ export function AdminClient() {
           <div className="mt-10 rounded-2xl border border-white/10 bg-white/[.04] p-4">
             <p className="text-xs text-slate-500">Signed in</p>
             <p className="mt-1 break-all text-sm font-bold text-slate-200">{email || 'Loading...'}</p>
-            <p className="mt-2 text-xs text-cyan-300">Super Admin</p>
+            <p className="mt-2 text-xs text-cyan-300">TRH Staff</p>
           </div>
           <button onClick={signOut} className="mt-4 w-full rounded-2xl border border-white/10 px-4 py-3 text-sm font-black text-slate-300 hover:bg-white/5">Sign out</button>
         </aside>
@@ -140,7 +141,7 @@ export function AdminClient() {
         <section className="p-5 lg:p-10">
           <div className="flex flex-wrap items-center justify-between gap-5">
             <div>
-              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[.22em] text-cyan-200">Admin console</span>
+              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[.22em] text-cyan-200">Staff console</span>
               <h1 className="mt-5 text-5xl font-black tracking-[-.06em] text-white">TRH Control Center</h1>
               <p className="mt-3 text-slate-400">Live 360° operations · Last update: {updatedAt ? updatedAt.toLocaleTimeString() : 'loading'} · Ctrl/⌘ K ready</p>
             </div>
