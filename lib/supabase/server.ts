@@ -58,3 +58,25 @@ export async function isAdminUser(userId: string) {
   const rows = await response.json()
   return Array.isArray(rows) && rows.length > 0
 }
+
+export async function canAccessModuleServer(user: AuthenticatedUser, moduleName: string) {
+  if (await isAdminUser(user.id)) return true
+  if (!user.email) return false
+
+  const { url, serviceRoleKey } = getSupabaseServerConfig()
+  const response = await fetch(`${url}/rest/v1/team_members?select=id,role,modules,status&email=ilike.${encodeURIComponent(user.email)}&status=eq.active&limit=1`, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    cache: 'no-store',
+  })
+
+  if (!response.ok) return false
+
+  const rows = await response.json()
+  const member = Array.isArray(rows) ? rows[0] : null
+  if (!member) return false
+  if (['owner', 'admin'].includes(member.role)) return true
+  return Array.isArray(member.modules) && member.modules.includes(moduleName)
+}
