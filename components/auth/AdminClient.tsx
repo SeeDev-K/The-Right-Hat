@@ -9,7 +9,7 @@ type ContactRequest = { id: string; name: string; email: string; message: string
 type ContentItem = { id: string; title: string; kind: string; status: string; created_at?: string }
 type AuditEvent = { action: string; actor: string; at: string; severity: 'info' | 'warn' | 'ok' }
 
-const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
+const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
 function countBy(items: ContentItem[], kind: string, status?: string) {
@@ -35,6 +35,7 @@ export function AdminClient() {
     { action: 'Admin session validated', actor: email || 'system', at: 'live', severity: 'ok' },
     { action: 'Contact CRM synchronized', actor: 'contact-requests', at: `${contacts.length} records`, severity: 'info' },
     { action: 'Content CMS synchronized', actor: 'content_items', at: `${contentItems.length} records`, severity: 'info' },
+    { action: 'Team access module available', actor: 'team_members', at: 'ready', severity: 'ok' },
     { action: 'RBAC policy check active', actor: 'Supabase RLS', at: 'live', severity: 'ok' },
   ], [email, contacts.length, contentItems.length])
 
@@ -90,6 +91,7 @@ export function AdminClient() {
   const apiSurface = [
     ['Contact intake', '/api/admin/contact-requests', contacts.length ? 'active' : 'ready'],
     ['Content table', 'content_items', contentItems.length ? 'synced' : 'ready'],
+    ['Team access', '/admin/team', 'ready'],
     ['Academy public', '/academy', `${academyPublished} live`],
     ['Media public', '/media', `${mediaPublished} live`],
   ]
