@@ -62,6 +62,21 @@ export function SimpleApiCenterBoard() {
 
   useEffect(() => { loadApis() }, [])
 
+  async function writeAudit(action: string, target: string, details: Record<string, unknown> = {}) {
+    const supabase = await createBrowserSupabaseClient()
+    if (!supabase) return
+    const { data } = await supabase.auth.getUser()
+    await supabase.from('audit_logs').insert({
+      actor_user_id: data.user?.id || null,
+      actor_email: data.user?.email || null,
+      module: 'apis',
+      action,
+      target,
+      severity: 'info',
+      details,
+    })
+  }
+
   async function loadApis() {
     setLoading(true)
     setNotice('')
@@ -101,6 +116,7 @@ export function SimpleApiCenterBoard() {
       .single()
     if (error || !data) { setNotice('Could not create API integration. Check duplicate slug or database permissions.'); setSaving(false); return }
     setItems((current) => [data as ApiIntegration, ...current])
+    await writeAudit('API integration created', cleanName, { slug: slugify(cleanName), category, auth_type: authType })
     setName('')
     setCategory('internal')
     setBaseUrl('')
@@ -122,6 +138,7 @@ export function SimpleApiCenterBoard() {
       .eq('id', item.id)
     if (error) { setNotice('Could not update integration status.'); return }
     await supabase.from('api_logs').insert({ integration_id: item.id, event_type: 'status_update', status: nextStatus, message: `${item.name} marked ${nextStatus}`, status_code: statusCode, latency_ms: latency })
+    await writeAudit('API status updated', item.name, { from: item.status, to: nextStatus, status_code: statusCode, latency_ms: latency })
     setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: nextStatus, last_status_code: statusCode, last_latency_ms: latency, last_check_at: new Date().toISOString() } : entry))
     loadApis()
   }
