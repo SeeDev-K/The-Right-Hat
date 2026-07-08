@@ -6,6 +6,8 @@ type PublishedMediaItem = {
   id: string
   title: string
   status: string
+  slug?: string | null
+  summary?: string | null
   created_at?: string
 }
 
@@ -36,7 +38,7 @@ async function loadPublishedMediaItems() {
 
   const { data, error } = await supabase
     .from('content_items')
-    .select('id,title,status,created_at')
+    .select('id,title,status,slug,summary,created_at')
     .eq('kind', 'media')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
@@ -50,9 +52,9 @@ export default async function MediaPage() {
   const articles = publishedItems.length
     ? publishedItems.map((item, index) => ({
         title: item.title,
-        slug: slugify(item.title),
+        slug: item.slug || slugify(item.title),
         image: fallbackArticles[index % fallbackArticles.length].image,
-        text: 'Published TRH Media item prepared from the control center and ready for public reading.',
+        text: item.summary || 'Published TRH Media item prepared from the control center and ready for public reading.',
       }))
     : fallbackArticles
 
