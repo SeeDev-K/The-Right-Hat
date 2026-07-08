@@ -20,6 +20,7 @@ export function AdminClient() {
   const router = useRouter()
   const [contacts, setContacts] = useState<ContactRequest[]>([])
   const [contentItems, setContentItems] = useState<ContentItem[]>([])
+  const [teamCount, setTeamCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [email, setEmail] = useState('')
@@ -35,9 +36,9 @@ export function AdminClient() {
     { action: 'Admin session validated', actor: email || 'system', at: 'live', severity: 'ok' },
     { action: 'Contact CRM synchronized', actor: 'contact-requests', at: `${contacts.length} records`, severity: 'info' },
     { action: 'Content CMS synchronized', actor: 'content_items', at: `${contentItems.length} records`, severity: 'info' },
-    { action: 'Team access module available', actor: 'team_members', at: 'ready', severity: 'ok' },
+    { action: 'Team access synchronized', actor: 'team_members', at: `${teamCount} members`, severity: 'ok' },
     { action: 'RBAC policy check active', actor: 'Supabase RLS', at: 'live', severity: 'ok' },
-  ], [email, contacts.length, contentItems.length])
+  ], [email, contacts.length, contentItems.length, teamCount])
 
   useEffect(() => {
     async function run() {
@@ -63,12 +64,13 @@ export function AdminClient() {
       const contactPayload = await contactResponse.json()
       setContacts(contactPayload.items || [])
 
-      const { data: cmsData } = await supabase
-        .from('content_items')
-        .select('id,title,kind,status,created_at')
-        .order('created_at', { ascending: false })
+      const [{ data: cmsData }, { count: membersCount }] = await Promise.all([
+        supabase.from('content_items').select('id,title,kind,status,created_at').order('created_at', { ascending: false }),
+        supabase.from('team_members').select('id', { count: 'exact', head: true }),
+      ])
 
       setContentItems((cmsData || []) as ContentItem[])
+      setTeamCount(membersCount || 0)
       setUpdatedAt(new Date())
       setLoading(false)
     }
@@ -85,13 +87,14 @@ export function AdminClient() {
     ['Contacts', contacts.length, 'CRM live'],
     ['Academy', academyTotal, `${academyPublished} published`],
     ['Media', mediaTotal, `${mediaPublished} published`],
+    ['Team', teamCount, 'members'],
     ['Review queue', reviewQueue, 'draft/review'],
   ]
 
   const apiSurface = [
     ['Contact intake', '/api/admin/contact-requests', contacts.length ? 'active' : 'ready'],
     ['Content table', 'content_items', contentItems.length ? 'synced' : 'ready'],
-    ['Team access', '/admin/team', 'ready'],
+    ['Team access', '/admin/team', `${teamCount} members`],
     ['Academy public', '/academy', `${academyPublished} live`],
     ['Media public', '/media', `${mediaPublished} live`],
   ]
@@ -123,7 +126,7 @@ export function AdminClient() {
             <Link href="/" className="rounded-2xl border border-white/10 px-5 py-3 text-sm font-black text-slate-200 hover:bg-white/5">View website</Link>
           </div>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-4">
+          <div className="mt-8 grid gap-5 md:grid-cols-5">
             {kpis.map(([label, value, trend]) => <div key={label} className="rounded-[28px] border border-white/10 bg-white/[.05] p-6 shadow-2xl shadow-black/20"><p className="text-sm font-black text-slate-400">{label}</p><strong className="mt-2 block text-4xl text-white">{value}</strong><p className="mt-2 text-sm font-bold text-cyan-300">{trend}</p><svg viewBox="0 0 120 34" className="mt-5 h-8 w-full text-cyan-300">{spark.map((v, i) => <rect key={i} x={i * 17} y={34 - v / 2} width="9" height={v / 2} rx="4" fill="currentColor" opacity={.28 + i / 12} />)}</svg></div>)}
           </div>
 
@@ -146,7 +149,7 @@ export function AdminClient() {
           <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[.05] p-6">
             <h2 className="text-3xl font-black text-white">Audit feed</h2>
             <p className="mt-1 text-slate-400">Administrative activity and module synchronization.</p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">{audit.map((e) => <div key={e.action} className="rounded-2xl border border-white/10 bg-black/20 p-4"><p className="font-black text-white">{e.action}</p><p className="mt-1 font-mono text-xs text-slate-500">{e.actor} · {e.at}</p></div>)}</div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">{audit.map((e) => <div key={e.action} className="rounded-2xl border border-white/10 bg-black/20 p-4"><p className="font-black text-white">{e.action}</p><p className="mt-1 font-mono text-xs text-slate-500">{e.actor} · {e.at}</p></div>)}</div>
             <Link href="/admin/activity" className="mt-5 inline-flex font-black text-cyan-300">Open activity →</Link>
           </section>
         </section>
