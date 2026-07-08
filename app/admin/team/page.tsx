@@ -1,3 +1,4 @@
+import { AdminModuleGuard } from '@/components/admin/AdminModuleGuard'
 import { SimpleTeamBoard } from '@/components/admin/SimpleTeamBoard'
 
 export default function AdminTeamPage() {
@@ -12,7 +13,7 @@ export default function AdminTeamPage() {
             <p className="mt-3 max-w-2xl text-slate-500">Manage collaborators, roles, invitations and module access for TRH operations.</p>
           </div>
         </div>
-        <div className="mt-8"><SimpleTeamBoard /></div>
+        <div className="mt-8"><AdminModuleGuard module="team"><SimpleTeamBoard /></AdminModuleGuard></div>
       </div>
     </main>
   )
