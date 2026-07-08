@@ -1,12 +1,16 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ReactNode, useEffect, useState } from 'react'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 
 type GuardState = 'loading' | 'allowed' | 'denied' | 'missing-config'
 
+const staffAccessPath = '/trh-staff/access'
+
 export function AdminModuleGuard({ module, children }: { module: string; children: ReactNode }) {
+  const router = useRouter()
   const [state, setState] = useState<GuardState>('loading')
   const [role, setRole] = useState<string | null>(null)
 
@@ -16,7 +20,7 @@ export function AdminModuleGuard({ module, children }: { module: string; childre
       if (!supabase) { setState('missing-config'); return }
 
       const { data: sessionData } = await supabase.auth.getSession()
-      if (!sessionData.session) { setState('denied'); return }
+      if (!sessionData.session) { router.replace(staffAccessPath); return }
 
       const [{ data: accessData, error: accessError }, { data: roleData }] = await Promise.all([
         supabase.rpc('can_access_module', { required_module: module }),
@@ -29,7 +33,7 @@ export function AdminModuleGuard({ module, children }: { module: string; childre
     }
 
     checkAccess()
-  }, [module])
+  }, [module, router])
 
   if (state === 'allowed') return <>{children}</>
 
@@ -37,6 +41,14 @@ export function AdminModuleGuard({ module, children }: { module: string; childre
     return (
       <div className="rounded-[32px] border border-slate-200 bg-white/80 p-8 text-slate-500 shadow-xl shadow-slate-200/60 backdrop-blur">
         Checking module access...
+      </div>
+    )
+  }
+
+  if (state === 'missing-config') {
+    return (
+      <div className="rounded-[32px] border border-red-200 bg-red-50/90 p-8 text-red-900 shadow-xl shadow-red-100/70 backdrop-blur">
+        Supabase configuration is required.
       </div>
     )
   }
@@ -49,9 +61,10 @@ export function AdminModuleGuard({ module, children }: { module: string; childre
         Your current role{role ? ` (${role})` : ''} is not allowed to open the <b>{module}</b> module.
         Ask an owner/admin to update your Team module access.
       </p>
-      <Link href="/admin" className="mt-6 inline-flex rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white">
-        Back to Control Center
-      </Link>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link href="/admin" className="inline-flex rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white">Back to Control Center</Link>
+        <Link href="/access-restricted" className="inline-flex rounded-2xl border border-amber-300 px-5 py-3 text-sm font-black text-amber-900">Access details</Link>
+      </div>
     </div>
   )
 }
