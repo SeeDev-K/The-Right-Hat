@@ -38,6 +38,21 @@ export function SimpleTeamBoard() {
 
   useEffect(() => { loadTeam() }, [])
 
+  async function writeAudit(action: string, target: string, details: Record<string, unknown> = {}) {
+    const supabase = await createBrowserSupabaseClient()
+    if (!supabase) return
+    const { data } = await supabase.auth.getUser()
+    await supabase.from('audit_logs').insert({
+      actor_user_id: data.user?.id || null,
+      actor_email: data.user?.email || null,
+      module: 'team',
+      action,
+      target,
+      severity: 'info',
+      details,
+    })
+  }
+
   async function loadTeam() {
     setLoading(true)
     setNotice('')
@@ -68,6 +83,7 @@ export function SimpleTeamBoard() {
       .single()
     if (error || !data) { setNotice('Database permission required.'); setSaving(false); return }
     setInvites((current) => [data as TeamInvite, ...current])
+    await writeAudit('Team invite created', cleanEmail, { role, modules })
     setFullName('')
     setEmail('')
     setRole('editor')
@@ -87,14 +103,17 @@ export function SimpleTeamBoard() {
     await supabase.from('team_invites').update({ status: 'accepted', accepted_at: new Date().toISOString() }).eq('id', invite.id)
     setMembers((current) => [data as TeamMember, ...current])
     setInvites((current) => current.map((item) => item.id === invite.id ? { ...item, status: 'accepted' } : item))
+    await writeAudit('Team member activated', invite.email, { role: invite.role, modules })
   }
 
   async function updateMemberRole(memberId: string, nextRole: string) {
     const supabase = await createBrowserSupabaseClient()
     if (!supabase) return
+    const currentMember = members.find((member) => member.id === memberId)
     const { error } = await supabase.from('team_members').update({ role: nextRole }).eq('id', memberId)
     if (error) { setNotice('Could not update role.'); return }
     setMembers((current) => current.map((member) => member.id === memberId ? { ...member, role: nextRole } : member))
+    await writeAudit('Team role updated', currentMember?.email || memberId, { from: currentMember?.role || null, to: nextRole })
   }
 
   function toggleModule(module: string) {
