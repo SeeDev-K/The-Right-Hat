@@ -23,6 +23,9 @@ export function AdminClient() {
   const [teamCount, setTeamCount] = useState(0)
   const [apiCount, setApiCount] = useState(0)
   const [apiActiveCount, setApiActiveCount] = useState(0)
+  const [communityPosts, setCommunityPosts] = useState(0)
+  const [communityReplies, setCommunityReplies] = useState(0)
+  const [communityHidden, setCommunityHidden] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [email, setEmail] = useState('')
@@ -38,10 +41,10 @@ export function AdminClient() {
     { action: 'Admin session validated', actor: email || 'system', at: 'live', severity: 'ok' },
     { action: 'Contact CRM synchronized', actor: 'contact-requests', at: `${contacts.length} records`, severity: 'info' },
     { action: 'Content CMS synchronized', actor: 'content_items', at: `${contentItems.length} records`, severity: 'info' },
-    { action: 'Community moderation enabled', actor: 'community', at: 'ready', severity: 'ok' },
+    { action: 'Community synchronized', actor: 'community', at: `${communityPosts} posts`, severity: 'ok' },
     { action: 'API Center synchronized', actor: 'api_integrations', at: `${apiCount} integrations`, severity: 'ok' },
     { action: 'Team access synchronized', actor: 'team_members', at: `${teamCount} members`, severity: 'ok' },
-  ], [email, contacts.length, contentItems.length, teamCount, apiCount])
+  ], [email, contacts.length, contentItems.length, teamCount, apiCount, communityPosts])
 
   useEffect(() => {
     async function run() {
@@ -67,17 +70,24 @@ export function AdminClient() {
       const contactPayload = await contactResponse.json()
       setContacts(contactPayload.items || [])
 
-      const [{ data: cmsData }, { count: membersCount }, { data: apiData }] = await Promise.all([
+      const [cmsResult, teamResult, apiResult, communityPostResult, communityReplyResult, hiddenPostResult, hiddenReplyResult] = await Promise.all([
         supabase.from('content_items').select('id,title,kind,status,created_at').order('created_at', { ascending: false }),
         supabase.from('team_members').select('id', { count: 'exact', head: true }),
         supabase.from('api_integrations').select('id,status'),
+        supabase.from('community_posts').select('id', { count: 'exact', head: true }),
+        supabase.from('community_replies').select('id', { count: 'exact', head: true }),
+        supabase.from('community_posts').select('id', { count: 'exact', head: true }).eq('status', 'hidden'),
+        supabase.from('community_replies').select('id', { count: 'exact', head: true }).eq('status', 'hidden'),
       ])
 
-      const apis = (apiData || []) as { id: string; status: string }[]
-      setContentItems((cmsData || []) as ContentItem[])
-      setTeamCount(membersCount || 0)
+      const apis = (apiResult.data || []) as { id: string; status: string }[]
+      setContentItems((cmsResult.data || []) as ContentItem[])
+      setTeamCount(teamResult.count || 0)
       setApiCount(apis.length)
       setApiActiveCount(apis.filter((item) => item.status === 'active').length)
+      setCommunityPosts(communityPostResult.count || 0)
+      setCommunityReplies(communityReplyResult.count || 0)
+      setCommunityHidden((hiddenPostResult.count || 0) + (hiddenReplyResult.count || 0))
       setUpdatedAt(new Date())
       setLoading(false)
     }
@@ -94,16 +104,17 @@ export function AdminClient() {
     ['Contacts', contacts.length, 'CRM live'],
     ['Academy', academyTotal, `${academyPublished} published`],
     ['Media', mediaTotal, `${mediaPublished} published`],
+    ['Community', communityPosts, `${communityReplies} replies`],
     ['APIs', apiCount, `${apiActiveCount} active`],
     ['Team', teamCount, 'members'],
-    ['Review queue', reviewQueue, 'draft/review'],
   ]
 
   const apiSurface = [
     ['Contact intake', '/api/admin/contact-requests', contacts.length ? 'active' : 'ready'],
-    ['Community moderation', '/admin/community', 'ready'],
+    ['Community moderation', '/admin/community', `${communityHidden} hidden`],
     ['API Center', '/admin/apis', `${apiActiveCount}/${apiCount} active`],
     ['Content table', 'content_items', contentItems.length ? 'synced' : 'ready'],
+    ['Review queue', 'content_items', `${reviewQueue} pending`],
     ['Team access', '/admin/team', `${teamCount} members`],
     ['Academy public', '/academy', `${academyPublished} live`],
     ['Media public', '/media', `${mediaPublished} live`],
