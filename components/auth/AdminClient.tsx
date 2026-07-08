@@ -10,6 +10,7 @@ type ContentItem = { id: string; title: string; kind: string; status: string; cr
 type AuditEvent = { action: string; actor: string; at: string; severity: 'info' | 'warn' | 'ok' }
 
 const staffAccessPath = '/trh-staff/access'
+const staffModules = ['crm', 'academy', 'media', 'community', 'apis', 'team', 'activity', 'security']
 const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Community','/admin/community'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
@@ -57,19 +58,25 @@ export function AdminClient() {
 
       setEmail(data.session.user.email || '')
 
-      const contactResponse = await fetch('/api/admin/contact-requests', {
-        headers: { Authorization: `Bearer ${data.session.access_token}` },
-        cache: 'no-store',
-      })
+      const accessResults = await Promise.all(staffModules.map(async (moduleName) => {
+        const { data: access } = await supabase.rpc('can_access_module', { required_module: moduleName })
+        return { moduleName, allowed: access === true }
+      }))
+      const hasStaffAccess = accessResults.some((item) => item.allowed)
+      const hasCrmAccess = accessResults.some((item) => item.moduleName === 'crm' && item.allowed)
 
-      if (!contactResponse.ok) {
-        setError(contactResponse.status === 403 ? 'Your account is not admin yet.' : 'Unable to load contacts.')
-        setLoading(false)
-        return
+      if (!hasStaffAccess) { router.replace('/access-restricted'); return }
+
+      if (hasCrmAccess) {
+        const contactResponse = await fetch('/api/admin/contact-requests', {
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+          cache: 'no-store',
+        })
+        if (contactResponse.ok) {
+          const contactPayload = await contactResponse.json()
+          setContacts(contactPayload.items || [])
+        }
       }
-
-      const contactPayload = await contactResponse.json()
-      setContacts(contactPayload.items || [])
 
       const [cmsResult, teamResult, apiResult, communityPostResult, communityReplyResult, hiddenPostResult, hiddenReplyResult] = await Promise.all([
         supabase.from('content_items').select('id,title,kind,status,created_at').order('created_at', { ascending: false }),
@@ -157,7 +164,7 @@ export function AdminClient() {
               <div className="mb-6 flex items-center justify-between gap-4"><div><h2 className="text-3xl font-black text-white">Contact CRM</h2><p className="mt-1 text-slate-400">New requests, status and intake visibility.</p></div><Link href="/admin/contacts" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white">Open CRM</Link></div>
               {loading && <div className="rounded-2xl bg-white/[.04] p-6 text-slate-300">Loading live data...</div>}
               {error && <div className="rounded-2xl bg-red-500/10 p-6 text-red-200">{error}</div>}
-              {!loading && !error && contacts.length === 0 && <div className="rounded-2xl border border-dashed border-white/15 bg-white/[.03] p-8 text-slate-300"><b className="text-white">No contact requests yet.</b><p className="mt-2">Once a request is submitted, it will appear here with visibility.</p></div>}
+              {!loading && !error && contacts.length === 0 && <div className="rounded-2xl border border-dashed border-white/15 bg-white/[.03] p-8 text-slate-300"><b className="text-white">No contact requests visible.</b><p className="mt-2">CRM data appears here for staff accounts with the CRM module.</p></div>}
               <div className="grid gap-4">{contacts.slice(0, 4).map((c) => <article key={c.id} className="rounded-2xl border border-white/10 bg-black/20 p-5"><h3 className="text-xl font-black text-white">{c.name}</h3><p className="text-slate-400">{c.email}{c.company ? ` · ${c.company}` : ''}</p><p className="mt-4 text-slate-300">{c.message}</p></article>)}</div>
             </section>
 
