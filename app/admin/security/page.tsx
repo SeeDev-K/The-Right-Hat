@@ -1,18 +1,19 @@
-const checks = [
-  ['Headers', 'Baseline browser security headers are configured in Next.js.'],
-  ['RBAC', 'Admin APIs re-check user permissions server-side.'],
-  ['Audit foundation', 'Database table exists for administrative event logging.'],
-  ['Secrets', 'Service role key remains server-side only.'],
-]
+import { AdminModuleGuard } from '@/components/admin/AdminModuleGuard'
+import { SimpleSecurityCenterBoard } from '@/components/admin/SimpleSecurityCenterBoard'
 
 export default function AdminSecurityPage() {
   return (
-    <main className="min-h-screen bg-[#070b12] p-5 text-white lg:p-10">
+    <main className="min-h-screen bg-[#f5f7fb] p-5 text-slate-950 lg:p-10">
       <div className="mx-auto max-w-7xl">
-        <a href="/admin" className="text-sm font-black text-cyan-300">← Control Center</a>
-        <h1 className="mt-4 text-5xl font-black tracking-[-.06em]">Security posture</h1>
-        <p className="mt-3 text-slate-400">Internal readiness view for authentication, access control and platform safeguards.</p>
-        <div className="mt-8 grid gap-4 md:grid-cols-4">{checks.map(([title, text]) => <article key={title} className="rounded-[28px] border border-white/10 bg-white/[.05] p-6"><h2 className="text-xl font-black">{title}</h2><p className="mt-3 text-sm leading-6 text-slate-400">{text}</p><span className="mt-5 inline-flex rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-black text-cyan-200">OK</span></article>)}</div>
+        <a href="/admin" className="text-sm font-black text-blue-600">← Control Center</a>
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[.22em] text-blue-600">Security posture</p>
+            <h1 className="mt-3 text-5xl font-black tracking-[-.06em] text-slate-950">Security Center</h1>
+            <p className="mt-3 max-w-2xl text-slate-500">Live view of admin identity, RBAC, module permissions and policy visibility.</p>
+          </div>
+        </div>
+        <div className="mt-8"><AdminModuleGuard module="security"><SimpleSecurityCenterBoard /></AdminModuleGuard></div>
       </div>
     </main>
   )
