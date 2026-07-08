@@ -9,7 +9,7 @@ type ContactRequest = { id: string; name: string; email: string; message: string
 type ContentItem = { id: string; title: string; kind: string; status: string; created_at?: string }
 type AuditEvent = { action: string; actor: string; at: string; severity: 'info' | 'warn' | 'ok' }
 
-const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
+const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Community','/admin/community'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
 function countBy(items: ContentItem[], kind: string, status?: string) {
@@ -38,6 +38,7 @@ export function AdminClient() {
     { action: 'Admin session validated', actor: email || 'system', at: 'live', severity: 'ok' },
     { action: 'Contact CRM synchronized', actor: 'contact-requests', at: `${contacts.length} records`, severity: 'info' },
     { action: 'Content CMS synchronized', actor: 'content_items', at: `${contentItems.length} records`, severity: 'info' },
+    { action: 'Community moderation enabled', actor: 'community', at: 'ready', severity: 'ok' },
     { action: 'API Center synchronized', actor: 'api_integrations', at: `${apiCount} integrations`, severity: 'ok' },
     { action: 'Team access synchronized', actor: 'team_members', at: `${teamCount} members`, severity: 'ok' },
   ], [email, contacts.length, contentItems.length, teamCount, apiCount])
@@ -100,6 +101,7 @@ export function AdminClient() {
 
   const apiSurface = [
     ['Contact intake', '/api/admin/contact-requests', contacts.length ? 'active' : 'ready'],
+    ['Community moderation', '/admin/community', 'ready'],
     ['API Center', '/admin/apis', `${apiActiveCount}/${apiCount} active`],
     ['Content table', 'content_items', contentItems.length ? 'synced' : 'ready'],
     ['Team access', '/admin/team', `${teamCount} members`],
@@ -157,7 +159,7 @@ export function AdminClient() {
           <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[.05] p-6">
             <h2 className="text-3xl font-black text-white">Audit feed</h2>
             <p className="mt-1 text-slate-400">Administrative activity and module synchronization.</p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">{audit.map((e) => <div key={e.action} className="rounded-2xl border border-white/10 bg-black/20 p-4"><p className="font-black text-white">{e.action}</p><p className="mt-1 font-mono text-xs text-slate-500">{e.actor} · {e.at}</p></div>)}</div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-6">{audit.map((e) => <div key={e.action} className="rounded-2xl border border-white/10 bg-black/20 p-4"><p className="font-black text-white">{e.action}</p><p className="mt-1 font-mono text-xs text-slate-500">{e.actor} · {e.at}</p></div>)}</div>
             <Link href="/admin/activity" className="mt-5 inline-flex font-black text-cyan-300">Open activity →</Link>
           </section>
         </section>
