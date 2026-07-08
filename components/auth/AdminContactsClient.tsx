@@ -8,6 +8,7 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 type Contact = { id: string; name: string; email: string; company?: string | null; message: string; status?: string | null; created_at: string; source?: string | null; assigned_to_email?: string | null }
 const statuses = ['all', 'new', 'in_progress', 'done', 'archived']
 const pageSize = 25
+const staffAccessPath = '/trh-staff/access'
 
 export function AdminContactsClient() {
   const router = useRouter()
@@ -37,7 +38,7 @@ export function AdminContactsClient() {
   }
 
   const loadContacts = useCallback(async (accessToken: string, nextPage = page, nextStatus = status) => { setLoading(true); const response = await fetch(`/api/admin/contact-requests?limit=${pageSize}&offset=${nextPage * pageSize}&status=${nextStatus}`, { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' }); if (!response.ok) { setError('Unable to load contacts.'); setLoading(false); return } const payload = await response.json(); setContacts(payload.items || []); setLoading(false) }, [page, status])
-  useEffect(() => { async function init() { const supabase = await createBrowserSupabaseClient(); if (!supabase) { setError('Supabase configuration missing.'); setLoading(false); return } const { data } = await supabase.auth.getSession(); if (!data.session) { router.replace('/admin/login'); return } setToken(data.session.access_token); await loadContacts(data.session.access_token, 0, 'all') } init() }, [router, loadContacts])
+  useEffect(() => { async function init() { const supabase = await createBrowserSupabaseClient(); if (!supabase) { setError('Supabase configuration missing.'); setLoading(false); return } const { data } = await supabase.auth.getSession(); if (!data.session) { router.replace(staffAccessPath); return } setToken(data.session.access_token); await loadContacts(data.session.access_token, 0, 'all') } init() }, [router, loadContacts])
   async function changeStatusFilter(next: string) { setStatus(next); setPage(0); if (token) await loadContacts(token, 0, next) }
   async function nextPage() { const next = page + 1; setPage(next); await loadContacts(token, next, status) }
   async function prevPage() { const next = Math.max(page - 1, 0); setPage(next); await loadContacts(token, next, status) }
