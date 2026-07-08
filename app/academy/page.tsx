@@ -6,6 +6,8 @@ type PublishedTrack = {
   id: string
   title: string
   status: string
+  slug?: string | null
+  summary?: string | null
   created_at?: string
 }
 
@@ -36,7 +38,7 @@ async function loadPublishedTracks() {
 
   const { data, error } = await supabase
     .from('content_items')
-    .select('id,title,status,created_at')
+    .select('id,title,status,slug,summary,created_at')
     .eq('kind', 'academy')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
@@ -50,9 +52,9 @@ export default async function AcademyPage() {
   const tracks = publishedTracks.length
     ? publishedTracks.map((track, index) => ({
         title: track.title,
-        slug: slugify(track.title),
+        slug: track.slug || slugify(track.title),
         image: fallbackTracks[index % fallbackTracks.length].image,
-        text: 'Published TRH Academy track prepared from the control center and ready for public discovery.',
+        text: track.summary || 'Published TRH Academy track prepared from the control center and ready for public discovery.',
       }))
     : fallbackTracks
 
