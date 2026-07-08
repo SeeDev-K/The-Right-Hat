@@ -16,7 +16,7 @@ type SecurityState = {
   notice: string
 }
 
-const moduleNames = ['crm', 'academy', 'media', 'apis', 'team', 'activity', 'security']
+const moduleNames = ['crm', 'academy', 'media', 'community', 'apis', 'team', 'activity', 'security']
 
 export function SimpleSecurityCenterBoard() {
   const [state, setState] = useState<SecurityState>({
