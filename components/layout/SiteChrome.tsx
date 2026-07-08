@@ -31,8 +31,8 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
             {nav.map(([label, href]) => <Link key={href} href={href} className="transition hover:text-[var(--primary)]">{label}</Link>)}
           </nav>
           <div className="flex shrink-0 items-center gap-3">
-            <Link href="/login" className="hidden px-4 py-2 text-[15px] font-extrabold text-slate-950 md:inline-flex">Sign in</Link>
-            <Link href="/signup" className="btn btn-ghost hidden md:inline-flex">Sign up</Link>
+            <Link href="/login" className="hidden px-4 py-2 text-[15px] font-extrabold text-slate-950 md:inline-flex">Member sign in</Link>
+            <Link href="/signup" className="btn btn-ghost hidden md:inline-flex">Join TRH</Link>
             <Link href="/contact" className="btn btn-primary px-6 py-3 text-[15px] md:px-7">Book a consult</Link>
           </div>
         </div>
@@ -49,7 +49,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
           <div className="grid gap-8 sm:grid-cols-3">
             <div><h3 className="text-xs font-black uppercase tracking-[.24em] text-slate-500">Platform</h3><div className="mt-5 grid gap-3 text-[16px]"><Link href="/academy">Academy</Link><Link href="/media">Media</Link><Link href="/community">Community</Link></div></div>
             <div><h3 className="text-xs font-black uppercase tracking-[.24em] text-slate-500">Company</h3><div className="mt-5 grid gap-3 text-[16px]"><Link href="/about">About</Link><Link href="/contact">Contact</Link><Link href="/setup">Setup</Link></div></div>
-            <div><h3 className="text-xs font-black uppercase tracking-[.24em] text-slate-500">Account</h3><div className="mt-5 grid gap-3 text-[16px]"><Link href="/signup">Sign up</Link><Link href="/login">Sign in</Link><Link href="/account">Account</Link><Link href="/admin/login">Admin</Link></div></div>
+            <div><h3 className="text-xs font-black uppercase tracking-[.24em] text-slate-500">Members</h3><div className="mt-5 grid gap-3 text-[16px]"><Link href="/signup">Join TRH</Link><Link href="/login">Member sign in</Link><Link href="/account">My account</Link></div></div>
           </div>
         </div>
       </footer>
