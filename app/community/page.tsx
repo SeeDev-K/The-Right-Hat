@@ -1,7 +1,8 @@
 import Image from 'next/image'
+import { CommunityBoard } from '@/components/community/CommunityBoard'
 
 const items = [
-  ['Private circles', '/assets/trh/sections/community-members.png', 'Curated groups for cyber professionals, founders and decision makers.'],
+  ['Member discussions', '/assets/trh/sections/community-members.png', 'Authenticated members can publish posts, ask questions and exchange with others.'],
   ['Events & briefings', '/assets/trh/sections/community-events.png', 'Roundtables, practical workshops and executive cyber briefings.'],
   ['Network intelligence', '/assets/trh/sections/community-network.png', 'A trusted professional network sharing playbooks, tooling and lessons every day.'],
 ]
@@ -15,8 +16,8 @@ export default function CommunityPage() {
         <div className="grid gap-10 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
           <div>
             <span className="badge">Community</span>
-            <h1 className="mt-5 max-w-3xl text-5xl font-black text-slate-950">A cybersecurity network built around trust and practical value.</h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">TRH Community is the human layer of the brand: knowledge exchange, mentorship, events and opportunity.</p>
+            <h1 className="mt-5 max-w-3xl text-5xl font-black text-slate-950">A cybersecurity network built around trust, members and practical exchange.</h1>
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">TRH Community is the human layer of the brand: members can publish, reply, discuss and build trusted professional relationships.</p>
           </div>
           <div className="card overflow-hidden p-3">
             <div className="relative aspect-[16/9] overflow-hidden rounded-[20px] bg-blue-50">
@@ -37,6 +38,7 @@ export default function CommunityPage() {
             </article>
           ))}
         </div>
+        <CommunityBoard />
       </div>
     </main>
   )
