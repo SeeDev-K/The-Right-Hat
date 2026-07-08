@@ -9,7 +9,7 @@ type ContactRequest = { id: string; name: string; email: string; message: string
 type ContentItem = { id: string; title: string; kind: string; status: string; created_at?: string }
 type AuditEvent = { action: string; actor: string; at: string; severity: 'info' | 'warn' | 'ok' }
 
-const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
+const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
 function countBy(items: ContentItem[], kind: string, status?: string) {
@@ -21,6 +21,8 @@ export function AdminClient() {
   const [contacts, setContacts] = useState<ContactRequest[]>([])
   const [contentItems, setContentItems] = useState<ContentItem[]>([])
   const [teamCount, setTeamCount] = useState(0)
+  const [apiCount, setApiCount] = useState(0)
+  const [apiActiveCount, setApiActiveCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [email, setEmail] = useState('')
@@ -36,9 +38,9 @@ export function AdminClient() {
     { action: 'Admin session validated', actor: email || 'system', at: 'live', severity: 'ok' },
     { action: 'Contact CRM synchronized', actor: 'contact-requests', at: `${contacts.length} records`, severity: 'info' },
     { action: 'Content CMS synchronized', actor: 'content_items', at: `${contentItems.length} records`, severity: 'info' },
+    { action: 'API Center synchronized', actor: 'api_integrations', at: `${apiCount} integrations`, severity: 'ok' },
     { action: 'Team access synchronized', actor: 'team_members', at: `${teamCount} members`, severity: 'ok' },
-    { action: 'RBAC policy check active', actor: 'Supabase RLS', at: 'live', severity: 'ok' },
-  ], [email, contacts.length, contentItems.length, teamCount])
+  ], [email, contacts.length, contentItems.length, teamCount, apiCount])
 
   useEffect(() => {
     async function run() {
@@ -64,13 +66,17 @@ export function AdminClient() {
       const contactPayload = await contactResponse.json()
       setContacts(contactPayload.items || [])
 
-      const [{ data: cmsData }, { count: membersCount }] = await Promise.all([
+      const [{ data: cmsData }, { count: membersCount }, { data: apiData }] = await Promise.all([
         supabase.from('content_items').select('id,title,kind,status,created_at').order('created_at', { ascending: false }),
         supabase.from('team_members').select('id', { count: 'exact', head: true }),
+        supabase.from('api_integrations').select('id,status'),
       ])
 
+      const apis = (apiData || []) as { id: string; status: string }[]
       setContentItems((cmsData || []) as ContentItem[])
       setTeamCount(membersCount || 0)
+      setApiCount(apis.length)
+      setApiActiveCount(apis.filter((item) => item.status === 'active').length)
       setUpdatedAt(new Date())
       setLoading(false)
     }
@@ -87,12 +93,14 @@ export function AdminClient() {
     ['Contacts', contacts.length, 'CRM live'],
     ['Academy', academyTotal, `${academyPublished} published`],
     ['Media', mediaTotal, `${mediaPublished} published`],
+    ['APIs', apiCount, `${apiActiveCount} active`],
     ['Team', teamCount, 'members'],
     ['Review queue', reviewQueue, 'draft/review'],
   ]
 
   const apiSurface = [
     ['Contact intake', '/api/admin/contact-requests', contacts.length ? 'active' : 'ready'],
+    ['API Center', '/admin/apis', `${apiActiveCount}/${apiCount} active`],
     ['Content table', 'content_items', contentItems.length ? 'synced' : 'ready'],
     ['Team access', '/admin/team', `${teamCount} members`],
     ['Academy public', '/academy', `${academyPublished} live`],
@@ -126,7 +134,7 @@ export function AdminClient() {
             <Link href="/" className="rounded-2xl border border-white/10 px-5 py-3 text-sm font-black text-slate-200 hover:bg-white/5">View website</Link>
           </div>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-5">
+          <div className="mt-8 grid gap-5 md:grid-cols-3 xl:grid-cols-6">
             {kpis.map(([label, value, trend]) => <div key={label} className="rounded-[28px] border border-white/10 bg-white/[.05] p-6 shadow-2xl shadow-black/20"><p className="text-sm font-black text-slate-400">{label}</p><strong className="mt-2 block text-4xl text-white">{value}</strong><p className="mt-2 text-sm font-bold text-cyan-300">{trend}</p><svg viewBox="0 0 120 34" className="mt-5 h-8 w-full text-cyan-300">{spark.map((v, i) => <rect key={i} x={i * 17} y={34 - v / 2} width="9" height={v / 2} rx="4" fill="currentColor" opacity={.28 + i / 12} />)}</svg></div>)}
           </div>
 
