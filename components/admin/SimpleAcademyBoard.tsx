@@ -57,6 +57,21 @@ export function SimpleAcademyBoard() {
     loadAcademyItems()
   }, [])
 
+  async function writeAudit(action: string, target: string, details: Record<string, unknown> = {}) {
+    const supabase = await createBrowserSupabaseClient()
+    if (!supabase) return
+    const { data } = await supabase.auth.getUser()
+    await supabase.from('audit_logs').insert({
+      actor_user_id: data.user?.id || null,
+      actor_email: data.user?.email || null,
+      module: 'academy',
+      action,
+      target,
+      severity: 'info',
+      details,
+    })
+  }
+
   async function addAcademyItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleanTitle = title.trim()
@@ -73,6 +88,7 @@ export function SimpleAcademyBoard() {
       .single()
     if (error || !data) { setPermissionNotice(true); setSaving(false); return }
     setItems((currentItems) => (usingFallback ? [data as AcademyItem] : [data as AcademyItem, ...currentItems]))
+    await writeAudit('Academy item created', cleanTitle, { slug: slugify(cleanTitle), status: 'draft' })
     setUsingFallback(false)
     setTitle('')
     setSummary('')
@@ -84,9 +100,11 @@ export function SimpleAcademyBoard() {
     setPermissionNotice(false)
     const supabase = await createBrowserSupabaseClient()
     if (!supabase) { setPermissionNotice(true); setUpdatingId(null); return }
+    const currentItem = items.find((item) => item.id === itemId)
     const { error } = await supabase.from('content_items').update({ status }).eq('id', itemId).eq('kind', 'academy')
     if (error) { setPermissionNotice(true); setUpdatingId(null); return }
     setItems((currentItems) => currentItems.map((item) => (item.id === itemId ? { ...item, status } : item)))
+    await writeAudit('Academy status updated', currentItem?.title || itemId, { from: currentItem?.status || null, to: status })
     setUpdatingId(null)
   }
 
