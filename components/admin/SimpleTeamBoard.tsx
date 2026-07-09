@@ -23,7 +23,7 @@ type TeamInvite = {
 }
 
 const roles = ['owner', 'admin', 'editor', 'analyst', 'viewer']
-const moduleOptions = ['crm', 'academy', 'media', 'community', 'apis', 'activity', 'security']
+const moduleOptions = ['crm', 'academy', 'media', 'community', 'apis', 'library', 'activity', 'security', 'settings']
 
 export function SimpleTeamBoard() {
   const [members, setMembers] = useState<TeamMember[]>([])
