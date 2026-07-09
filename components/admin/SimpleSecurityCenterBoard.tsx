@@ -16,7 +16,7 @@ type SecurityState = {
   notice: string
 }
 
-const moduleNames = ['crm', 'academy', 'media', 'community', 'apis', 'team', 'activity', 'security']
+const moduleNames = ['crm', 'academy', 'media', 'community', 'apis', 'library', 'team', 'activity', 'security', 'settings']
 
 export function SimpleSecurityCenterBoard() {
   const [state, setState] = useState<SecurityState>({
@@ -119,7 +119,7 @@ export function SimpleSecurityCenterBoard() {
 
       <div className="rounded-[32px] border border-slate-200/80 bg-white/80 p-6 shadow-xl shadow-slate-200/60 backdrop-blur">
         <h3 className="text-2xl font-black tracking-[-.04em] text-slate-950">Module access matrix</h3>
-        <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
           {state.modules.map((item) => <div key={item.name} className="rounded-2xl border border-slate-100 bg-white p-4"><div className="flex items-center justify-between gap-3"><p className="font-black uppercase tracking-[.12em] text-slate-700">{item.name}</p><span className={item.allowed ? 'rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700' : 'rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500'}>{item.allowed ? 'allowed' : 'blocked'}</span></div></div>)}
         </div>
       </div>
