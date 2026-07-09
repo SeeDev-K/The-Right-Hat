@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { FormEvent, useState } from 'react'
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 
-const staffModules = ['crm', 'academy', 'media', 'community', 'apis', 'team', 'activity', 'security']
+const staffModules = ['crm', 'academy', 'media', 'community', 'apis', 'library', 'team', 'activity', 'security', 'settings']
 
 export default function StaffAccessPage() {
   const router = useRouter()
