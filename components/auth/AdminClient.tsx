@@ -10,7 +10,7 @@ type ContentItem = { id: string; title: string; kind: string; status: string; cr
 type AuditEvent = { action: string; actor: string; at: string; severity: 'info' | 'warn' | 'ok' }
 
 const staffAccessPath = '/trh-staff/access'
-const staffModules = ['crm', 'academy', 'media', 'community', 'apis', 'team', 'activity', 'security']
+const staffModules = ['crm', 'academy', 'media', 'community', 'apis', 'library', 'team', 'activity', 'security', 'settings']
 const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Community','/admin/community'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
