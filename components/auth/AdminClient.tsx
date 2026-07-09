@@ -11,7 +11,7 @@ type AuditEvent = { action: string; actor: string; at: string; severity: 'info' 
 
 const staffAccessPath = '/trh-staff/access'
 const staffModules = ['crm', 'academy', 'media', 'community', 'apis', 'library', 'team', 'activity', 'security', 'settings']
-const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Community','/admin/community'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
+const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Community','/admin/community'], ['Members','/admin/members'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
 function countBy(items: ContentItem[], kind: string, status?: string) {
@@ -120,6 +120,7 @@ export function AdminClient() {
   const apiSurface = [
     ['Contact intake', '/api/admin/contact-requests', contacts.length ? 'active' : 'ready'],
     ['Community moderation', '/admin/community', `${communityHidden} hidden`],
+    ['Members control', '/admin/members', 'community access'],
     ['API Center', '/admin/apis', `${apiActiveCount}/${apiCount} active`],
     ['Content table', 'content_items', contentItems.length ? 'synced' : 'ready'],
     ['Review queue', 'content_items', `${reviewQueue} pending`],
