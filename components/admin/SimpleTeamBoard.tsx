@@ -19,11 +19,12 @@ type TeamInvite = {
   email: string
   role: string
   status: string
+  modules?: string[] | null
   created_at?: string
 }
 
 const roles = ['owner', 'admin', 'editor', 'analyst', 'viewer']
-const moduleOptions = ['crm', 'academy', 'media', 'community', 'apis', 'library', 'activity', 'security', 'settings']
+const moduleOptions = ['crm', 'academy', 'media', 'community', 'apis', 'library', 'team', 'activity', 'security', 'settings']
 
 export function SimpleTeamBoard() {
   const [members, setMembers] = useState<TeamMember[]>([])
@@ -60,9 +61,9 @@ export function SimpleTeamBoard() {
     if (!supabase) { setNotice('Supabase configuration required.'); setLoading(false); return }
     const [{ data: memberData, error: memberError }, { data: inviteData, error: inviteError }] = await Promise.all([
       supabase.from('team_members').select('id,full_name,email,role,status,modules,created_at').order('created_at', { ascending: false }),
-      supabase.from('team_invites').select('id,full_name,email,role,status,created_at').order('created_at', { ascending: false }),
+      supabase.from('team_invites').select('id,full_name,email,role,status,modules,created_at').order('created_at', { ascending: false }),
     ])
-    if (memberError || inviteError) { setNotice('Database permission required.'); setLoading(false); return }
+    if (memberError || inviteError) { setNotice('Database permission required. Run the latest team invite modules migration if needed.'); setLoading(false); return }
     setMembers((memberData || []) as TeamMember[])
     setInvites((inviteData || []) as TeamInvite[])
     setLoading(false)
@@ -78,8 +79,8 @@ export function SimpleTeamBoard() {
     if (!supabase) { setNotice('Supabase configuration required.'); setSaving(false); return }
     const { data, error } = await supabase
       .from('team_invites')
-      .insert({ email: cleanEmail, full_name: fullName.trim() || null, role, status: 'pending' })
-      .select('id,full_name,email,role,status,created_at')
+      .insert({ email: cleanEmail, full_name: fullName.trim() || null, role, status: 'pending', modules })
+      .select('id,full_name,email,role,status,modules,created_at')
       .single()
     if (error || !data) { setNotice('Database permission required.'); setSaving(false); return }
     setInvites((current) => [data as TeamInvite, ...current])
@@ -94,16 +95,17 @@ export function SimpleTeamBoard() {
     setNotice('')
     const supabase = await createBrowserSupabaseClient()
     if (!supabase) { setNotice('Supabase configuration required.'); return }
+    const inviteModules = invite.modules && invite.modules.length > 0 ? invite.modules : modules
     const { data, error } = await supabase
       .from('team_members')
-      .insert({ full_name: invite.full_name || invite.email, email: invite.email, role: invite.role, status: 'active', modules })
+      .insert({ full_name: invite.full_name || invite.email, email: invite.email, role: invite.role, status: 'active', modules: inviteModules })
       .select('id,full_name,email,role,status,modules,created_at')
       .single()
     if (error || !data) { setNotice('Could not activate member. Check duplicate email or database permissions.'); return }
     await supabase.from('team_invites').update({ status: 'accepted', accepted_at: new Date().toISOString() }).eq('id', invite.id)
     setMembers((current) => [data as TeamMember, ...current])
     setInvites((current) => current.map((item) => item.id === invite.id ? { ...item, status: 'accepted' } : item))
-    await writeAudit('Team member activated', invite.email, { role: invite.role, modules })
+    await writeAudit('Team member activated', invite.email, { role: invite.role, modules: inviteModules })
   }
 
   async function updateMemberRole(memberId: string, nextRole: string) {
@@ -116,8 +118,38 @@ export function SimpleTeamBoard() {
     await writeAudit('Team role updated', currentMember?.email || memberId, { from: currentMember?.role || null, to: nextRole })
   }
 
+  async function updateMemberModule(member: TeamMember, module: string) {
+    const supabase = await createBrowserSupabaseClient()
+    if (!supabase) return
+    const currentModules = member.modules || []
+    const nextModules = currentModules.includes(module) ? currentModules.filter((item) => item !== module) : [...currentModules, module]
+    const { error } = await supabase.from('team_members').update({ modules: nextModules }).eq('id', member.id)
+    if (error) { setNotice('Could not update member modules.'); return }
+    setMembers((current) => current.map((item) => item.id === member.id ? { ...item, modules: nextModules } : item))
+    await writeAudit('Team modules updated', member.email, { from: currentModules, to: nextModules })
+  }
+
+  async function updateInviteModule(invite: TeamInvite, module: string) {
+    const supabase = await createBrowserSupabaseClient()
+    if (!supabase) return
+    const currentModules = invite.modules || []
+    const nextModules = currentModules.includes(module) ? currentModules.filter((item) => item !== module) : [...currentModules, module]
+    const { error } = await supabase.from('team_invites').update({ modules: nextModules }).eq('id', invite.id)
+    if (error) { setNotice('Could not update invite modules.'); return }
+    setInvites((current) => current.map((item) => item.id === invite.id ? { ...item, modules: nextModules } : item))
+    await writeAudit('Team invite modules updated', invite.email, { from: currentModules, to: nextModules })
+  }
+
   function toggleModule(module: string) {
     setModules((current) => current.includes(module) ? current.filter((item) => item !== module) : [...current, module])
+  }
+
+  function ModulePills({ selected, onToggle }: { selected: string[]; onToggle: (module: string) => void }) {
+    return (
+      <div className="mt-3 flex flex-wrap gap-2">
+        {moduleOptions.map((module) => <button key={module} type="button" onClick={() => onToggle(module)} className={selected.includes(module) ? 'rounded-full bg-blue-600 px-3 py-1.5 text-xs font-black uppercase tracking-[.12em] text-white' : 'rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[.12em] text-slate-500'}>{module}</button>)}
+      </div>
+    )
   }
 
   return (
@@ -127,7 +159,7 @@ export function SimpleTeamBoard() {
           <div>
             <p className="text-xs font-black uppercase tracking-[.18em] text-blue-600">Team access</p>
             <h2 className="mt-2 text-3xl font-black tracking-[-.04em] text-slate-950">Members & invitations</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Invite collaborators, assign roles and prepare module access for the TRH control center.</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Invite collaborators, assign roles and manage module access for the TRH control center.</p>
           </div>
           <button onClick={loadTeam} className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50">Refresh</button>
         </div>
@@ -141,22 +173,19 @@ export function SimpleTeamBoard() {
           <button disabled={saving} className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-lg shadow-slate-300 disabled:opacity-60">{saving ? 'Saving...' : 'Create invite'}</button>
         </form>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {moduleOptions.map((module) => <button key={module} type="button" onClick={() => toggleModule(module)} className={modules.includes(module) ? 'rounded-full bg-blue-600 px-3 py-1.5 text-xs font-black uppercase tracking-[.12em] text-white' : 'rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[.12em] text-slate-500'}>{module}</button>)}
-        </div>
-
+        <ModulePills selected={modules} onToggle={toggleModule} />
         {notice && <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">{notice}</p>}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-[32px] border border-slate-200/80 bg-white/80 p-6 shadow-xl shadow-slate-200/60 backdrop-blur">
           <h3 className="text-2xl font-black tracking-[-.04em] text-slate-950">Active members</h3>
-          {loading ? <p className="mt-5 text-slate-500">Loading members...</p> : members.length === 0 ? <p className="mt-5 rounded-2xl border border-dashed border-slate-200 p-5 text-slate-500">No active members yet.</p> : <div className="mt-5 divide-y divide-slate-100">{members.map((member) => <article key={member.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><h4 className="font-black text-slate-950">{member.full_name}</h4><p className="text-sm text-slate-500">{member.email}</p><p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-blue-600">{member.status}</p></div><select value={member.role} onChange={(event) => updateMemberRole(member.id, event.target.value)} className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700">{roles.map((item) => <option key={item} value={item}>{item}</option>)}</select></article>)}</div>}
+          {loading ? <p className="mt-5 text-slate-500">Loading members...</p> : members.length === 0 ? <p className="mt-5 rounded-2xl border border-dashed border-slate-200 p-5 text-slate-500">No active members yet.</p> : <div className="mt-5 divide-y divide-slate-100">{members.map((member) => <article key={member.id} className="py-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h4 className="font-black text-slate-950">{member.full_name}</h4><p className="text-sm text-slate-500">{member.email}</p><p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-blue-600">{member.status}</p></div><select value={member.role} onChange={(event) => updateMemberRole(member.id, event.target.value)} className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700">{roles.map((item) => <option key={item} value={item}>{item}</option>)}</select></div><ModulePills selected={member.modules || []} onToggle={(module) => updateMemberModule(member, module)} /></article>)}</div>}
         </div>
 
         <div className="rounded-[32px] border border-slate-200/80 bg-white/80 p-6 shadow-xl shadow-slate-200/60 backdrop-blur">
           <h3 className="text-2xl font-black tracking-[-.04em] text-slate-950">Invitations</h3>
-          {loading ? <p className="mt-5 text-slate-500">Loading invitations...</p> : invites.length === 0 ? <p className="mt-5 rounded-2xl border border-dashed border-slate-200 p-5 text-slate-500">No pending invitations yet.</p> : <div className="mt-5 divide-y divide-slate-100">{invites.map((invite) => <article key={invite.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><h4 className="font-black text-slate-950">{invite.full_name || invite.email}</h4><p className="text-sm text-slate-500">{invite.email} · {invite.role}</p><p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-slate-400">{invite.status}</p></div>{invite.status === 'pending' && <button onClick={() => addMemberFromInvite(invite)} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-black text-white shadow-lg shadow-blue-100">Activate</button>}</article>)}</div>}
+          {loading ? <p className="mt-5 text-slate-500">Loading invitations...</p> : invites.length === 0 ? <p className="mt-5 rounded-2xl border border-dashed border-slate-200 p-5 text-slate-500">No pending invitations yet.</p> : <div className="mt-5 divide-y divide-slate-100">{invites.map((invite) => <article key={invite.id} className="py-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h4 className="font-black text-slate-950">{invite.full_name || invite.email}</h4><p className="text-sm text-slate-500">{invite.email} · {invite.role}</p><p className="mt-1 text-xs font-bold uppercase tracking-[.12em] text-slate-400">{invite.status}</p></div>{invite.status === 'pending' && <button onClick={() => addMemberFromInvite(invite)} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-black text-white shadow-lg shadow-blue-100">Activate</button>}</div>{invite.status === 'pending' && <ModulePills selected={invite.modules || []} onToggle={(module) => updateInviteModule(invite, module)} />}</article>)}</div>}
         </div>
       </div>
     </section>
