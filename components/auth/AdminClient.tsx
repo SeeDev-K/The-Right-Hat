@@ -28,6 +28,8 @@ export function AdminClient() {
   const [communityPosts, setCommunityPosts] = useState(0)
   const [communityReplies, setCommunityReplies] = useState(0)
   const [communityHidden, setCommunityHidden] = useState(0)
+  const [communityReports, setCommunityReports] = useState(0)
+  const [communityOpenReports, setCommunityOpenReports] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [email, setEmail] = useState('')
@@ -44,9 +46,9 @@ export function AdminClient() {
     { action: 'Contact CRM synchronized', actor: 'contact-requests', at: `${contacts.length} records`, severity: 'info' },
     { action: 'Content CMS synchronized', actor: 'content_items', at: `${contentItems.length} records`, severity: 'info' },
     { action: 'Community synchronized', actor: 'community', at: `${communityPosts} posts`, severity: 'ok' },
+    { action: 'Reports queue synchronized', actor: 'community_reports', at: `${communityOpenReports} open`, severity: communityOpenReports > 0 ? 'warn' : 'ok' },
     { action: 'API Center synchronized', actor: 'api_integrations', at: `${apiCount} integrations`, severity: 'ok' },
-    { action: 'Team access synchronized', actor: 'team_members', at: `${teamCount} members`, severity: 'ok' },
-  ], [email, contacts.length, contentItems.length, teamCount, apiCount, communityPosts])
+  ], [email, contacts.length, contentItems.length, apiCount, communityPosts, communityOpenReports])
 
   useEffect(() => {
     async function run() {
@@ -78,7 +80,7 @@ export function AdminClient() {
         }
       }
 
-      const [cmsResult, teamResult, apiResult, communityPostResult, communityReplyResult, hiddenPostResult, hiddenReplyResult] = await Promise.all([
+      const [cmsResult, teamResult, apiResult, communityPostResult, communityReplyResult, hiddenPostResult, hiddenReplyResult, reportResult, openReportResult] = await Promise.all([
         supabase.from('content_items').select('id,title,kind,status,created_at').order('created_at', { ascending: false }),
         supabase.from('team_members').select('id', { count: 'exact', head: true }),
         supabase.from('api_integrations').select('id,status'),
@@ -86,6 +88,8 @@ export function AdminClient() {
         supabase.from('community_replies').select('id', { count: 'exact', head: true }),
         supabase.from('community_posts').select('id', { count: 'exact', head: true }).eq('status', 'hidden'),
         supabase.from('community_replies').select('id', { count: 'exact', head: true }).eq('status', 'hidden'),
+        supabase.from('community_reports').select('id', { count: 'exact', head: true }),
+        supabase.from('community_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
       ])
 
       const apis = (apiResult.data || []) as { id: string; status: string }[]
@@ -96,6 +100,8 @@ export function AdminClient() {
       setCommunityPosts(communityPostResult.count || 0)
       setCommunityReplies(communityReplyResult.count || 0)
       setCommunityHidden((hiddenPostResult.count || 0) + (hiddenReplyResult.count || 0))
+      setCommunityReports(reportResult.count || 0)
+      setCommunityOpenReports(openReportResult.count || 0)
       setUpdatedAt(new Date())
       setLoading(false)
     }
@@ -113,13 +119,13 @@ export function AdminClient() {
     ['Academy', academyTotal, `${academyPublished} published`],
     ['Media', mediaTotal, `${mediaPublished} published`],
     ['Community', communityPosts, `${communityReplies} replies`],
-    ['APIs', apiCount, `${apiActiveCount} active`],
+    ['Reports', communityOpenReports, `${communityReports} total`],
     ['Team', teamCount, 'members'],
   ]
 
   const apiSurface = [
     ['Contact intake', '/api/admin/contact-requests', contacts.length ? 'active' : 'ready'],
-    ['Community moderation', '/admin/community', `${communityHidden} hidden`],
+    ['Community moderation', '/admin/community', `${communityHidden} hidden · ${communityOpenReports} open reports`],
     ['Members control', '/admin/members', 'community access'],
     ['API Center', '/admin/apis', `${apiActiveCount}/${apiCount} active`],
     ['Content table', 'content_items', contentItems.length ? 'synced' : 'ready'],
@@ -136,7 +142,7 @@ export function AdminClient() {
           <div className="text-3xl font-black tracking-[-.08em]">TRH</div>
           <p className="mt-2 text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Control Center</p>
           <nav className="mt-10 grid gap-2 text-sm font-black text-slate-400">
-            {nav.map(([item, href], i) => <Link key={item} href={href} className={i === 0 ? 'rounded-2xl bg-cyan-400/10 px-4 py-3 text-cyan-200' : 'rounded-2xl px-4 py-3 hover:bg-white/5'}>{item}{item === 'Contacts CRM' && contacts.length > 0 ? <b className="ml-2 rounded-full bg-red-500 px-2 text-xs text-white">{contacts.length}</b> : null}</Link>)}
+            {nav.map(([item, href], i) => <Link key={item} href={href} className={i === 0 ? 'rounded-2xl bg-cyan-400/10 px-4 py-3 text-cyan-200' : 'rounded-2xl px-4 py-3 hover:bg-white/5'}>{item}{item === 'Contacts CRM' && contacts.length > 0 ? <b className="ml-2 rounded-full bg-red-500 px-2 text-xs text-white">{contacts.length}</b> : null}{item === 'Community' && communityOpenReports > 0 ? <b className="ml-2 rounded-full bg-amber-500 px-2 text-xs text-white">{communityOpenReports}</b> : null}</Link>)}
           </nav>
           <div className="mt-10 rounded-2xl border border-white/10 bg-white/[.04] p-4">
             <p className="text-xs text-slate-500">Signed in</p>
