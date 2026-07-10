@@ -11,7 +11,6 @@ type AuditEvent = { action: string; actor: string; at: string; severity: 'info' 
 
 const staffAccessPath = '/trh-staff/access'
 const staffModules = ['crm', 'academy', 'media', 'community', 'apis', 'library', 'team', 'activity', 'security', 'settings']
-const nav = [['Dashboard','/admin'], ['Contacts CRM','/admin/contacts'], ['Academy CMS','/admin/academy'], ['Media CMS','/admin/media'], ['Community','/admin/community'], ['Members','/admin/members'], ['API Center','/admin/apis'], ['Team','/admin/team'], ['Library','/admin/library'], ['Activity','/admin/activity'], ['Security','/admin/security'], ['Settings','/admin/settings']]
 const spark = [18, 31, 24, 44, 36, 59, 52]
 
 function countBy(items: ContentItem[], kind: string, status?: string) {
@@ -42,7 +41,7 @@ export function AdminClient() {
   const reviewQueue = contentItems.filter((item) => ['draft', 'review'].includes(item.status)).length
 
   const audit: AuditEvent[] = useMemo(() => [
-    { action: 'Admin session validated', actor: email || 'system', at: 'live', severity: 'ok' },
+    { action: 'Staff session validated', actor: email || 'system', at: 'live', severity: 'ok' },
     { action: 'Contact CRM synchronized', actor: 'contact-requests', at: `${contacts.length} records`, severity: 'info' },
     { action: 'Content CMS synchronized', actor: 'content_items', at: `${contentItems.length} records`, severity: 'info' },
     { action: 'Community synchronized', actor: 'community', at: `${communityPosts} posts`, severity: 'ok' },
@@ -57,7 +56,6 @@ export function AdminClient() {
 
       const { data } = await supabase.auth.getSession()
       if (!data.session) { router.replace(staffAccessPath); return }
-
       setEmail(data.session.user.email || '')
 
       const accessResults = await Promise.all(staffModules.map(async (moduleName) => {
@@ -66,7 +64,6 @@ export function AdminClient() {
       }))
       const hasStaffAccess = accessResults.some((item) => item.allowed)
       const hasCrmAccess = accessResults.some((item) => item.moduleName === 'crm' && item.allowed)
-
       if (!hasStaffAccess) { router.replace('/access-restricted'); return }
 
       if (hasCrmAccess) {
@@ -108,12 +105,6 @@ export function AdminClient() {
     run()
   }, [router])
 
-  async function signOut() {
-    const supabase = await createBrowserSupabaseClient()
-    if (supabase) await supabase.auth.signOut()
-    router.replace(staffAccessPath)
-  }
-
   const kpis = [
     ['Contacts', contacts.length, 'CRM live'],
     ['Academy', academyTotal, `${academyPublished} published`],
@@ -136,58 +127,48 @@ export function AdminClient() {
   ]
 
   return (
-    <main className="min-h-screen bg-[#070b12] text-white">
-      <div className="grid min-h-screen lg:grid-cols-[296px_1fr]">
-        <aside className="hidden border-r border-white/10 bg-[#0a0f1a] p-7 lg:block">
-          <div className="text-3xl font-black tracking-[-.08em]">TRH</div>
-          <p className="mt-2 text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Control Center</p>
-          <nav className="mt-10 grid gap-2 text-sm font-black text-slate-400">
-            {nav.map(([item, href], i) => <Link key={item} href={href} className={i === 0 ? 'rounded-2xl bg-cyan-400/10 px-4 py-3 text-cyan-200' : 'rounded-2xl px-4 py-3 hover:bg-white/5'}>{item}{item === 'Contacts CRM' && contacts.length > 0 ? <b className="ml-2 rounded-full bg-red-500 px-2 text-xs text-white">{contacts.length}</b> : null}{item === 'Community' && communityOpenReports > 0 ? <b className="ml-2 rounded-full bg-amber-500 px-2 text-xs text-white">{communityOpenReports}</b> : null}</Link>)}
-          </nav>
-          <div className="mt-10 rounded-2xl border border-white/10 bg-white/[.04] p-4">
-            <p className="text-xs text-slate-500">Signed in</p>
-            <p className="mt-1 break-all text-sm font-bold text-slate-200">{email || 'Loading...'}</p>
-            <p className="mt-2 text-xs text-cyan-300">TRH Staff</p>
+    <main className="p-5 text-[var(--admin-text)] lg:p-9">
+      <div className="mx-auto max-w-[1500px]">
+        <div className="flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[.22em] text-[var(--admin-cyan)]">Live operations</span>
+            <h1 className="mt-5 text-5xl font-black tracking-[-.065em] text-[var(--admin-text)]">TRH Control Center</h1>
+            <p className="mt-3 text-[var(--admin-muted)]">Enterprise operations overview · Last refresh: {updatedAt ? updatedAt.toLocaleTimeString() : 'loading'}</p>
           </div>
-          <button onClick={signOut} className="mt-4 w-full rounded-2xl border border-white/10 px-4 py-3 text-sm font-black text-slate-300 hover:bg-white/5">Sign out</button>
-        </aside>
+          <Link href="/admin/security" className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-5 py-3 text-sm font-black text-[var(--admin-text)] transition hover:border-cyan-400/35">View security posture</Link>
+        </div>
 
-        <section className="p-5 lg:p-10">
-          <div className="flex flex-wrap items-center justify-between gap-5">
-            <div>
-              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[.22em] text-cyan-200">Staff console</span>
-              <h1 className="mt-5 text-5xl font-black tracking-[-.06em] text-white">TRH Control Center</h1>
-              <p className="mt-3 text-slate-400">Live 360° operations · Last update: {updatedAt ? updatedAt.toLocaleTimeString() : 'loading'} · Ctrl/⌘ K ready</p>
-            </div>
-            <Link href="/" className="rounded-2xl border border-white/10 px-5 py-3 text-sm font-black text-slate-200 hover:bg-white/5">View website</Link>
-          </div>
+        <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+          {kpis.map(([label, value, trend], cardIndex) => (
+            <article key={label} className="admin-panel p-5 transition duration-200 hover:-translate-y-1 hover:border-cyan-400/25">
+              <div className="flex items-start justify-between gap-3"><p className="text-sm font-black text-[var(--admin-muted)]">{label}</p><span className="admin-mono text-[10px] text-[var(--admin-muted)]">0{cardIndex + 1}</span></div>
+              <strong className="mt-3 block text-4xl text-[var(--admin-text)]">{value}</strong>
+              <p className="mt-2 text-xs font-bold text-[var(--admin-cyan)]">{trend}</p>
+              <svg viewBox="0 0 120 34" className="mt-5 h-8 w-full text-[var(--admin-cyan)]" aria-hidden="true">{spark.map((v, i) => <rect key={i} x={i * 17} y={34 - v / 2} width="9" height={v / 2} rx="4" fill="currentColor" opacity={.24 + i / 12} />)}</svg>
+            </article>
+          ))}
+        </div>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-3 xl:grid-cols-6">
-            {kpis.map(([label, value, trend]) => <div key={label} className="rounded-[28px] border border-white/10 bg-white/[.05] p-6 shadow-2xl shadow-black/20"><p className="text-sm font-black text-slate-400">{label}</p><strong className="mt-2 block text-4xl text-white">{value}</strong><p className="mt-2 text-sm font-bold text-cyan-300">{trend}</p><svg viewBox="0 0 120 34" className="mt-5 h-8 w-full text-cyan-300">{spark.map((v, i) => <rect key={i} x={i * 17} y={34 - v / 2} width="9" height={v / 2} rx="4" fill="currentColor" opacity={.28 + i / 12} />)}</svg></div>)}
-          </div>
-
-          <div className="mt-8 grid gap-5 xl:grid-cols-[1.15fr_.85fr]">
-            <section className="rounded-[32px] border border-white/10 bg-white/[.05] p-6">
-              <div className="mb-6 flex items-center justify-between gap-4"><div><h2 className="text-3xl font-black text-white">Contact CRM</h2><p className="mt-1 text-slate-400">New requests, status and intake visibility.</p></div><Link href="/admin/contacts" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white">Open CRM</Link></div>
-              {loading && <div className="rounded-2xl bg-white/[.04] p-6 text-slate-300">Loading live data...</div>}
-              {error && <div className="rounded-2xl bg-red-500/10 p-6 text-red-200">{error}</div>}
-              {!loading && !error && contacts.length === 0 && <div className="rounded-2xl border border-dashed border-white/15 bg-white/[.03] p-8 text-slate-300"><b className="text-white">No contact requests visible.</b><p className="mt-2">CRM data appears here for staff accounts with the CRM module.</p></div>}
-              <div className="grid gap-4">{contacts.slice(0, 4).map((c) => <article key={c.id} className="rounded-2xl border border-white/10 bg-black/20 p-5"><h3 className="text-xl font-black text-white">{c.name}</h3><p className="text-slate-400">{c.email}{c.company ? ` · ${c.company}` : ''}</p><p className="mt-4 text-slate-300">{c.message}</p></article>)}</div>
-            </section>
-
-            <section className="rounded-[32px] border border-white/10 bg-white/[.05] p-6">
-              <h2 className="text-3xl font-black text-white">API & Data Surface</h2>
-              <p className="mt-1 text-slate-400">Operational view of the connected modules.</p>
-              <div className="mt-6 grid gap-3">{apiSurface.map(([name, path, state]) => <div key={name} className="rounded-2xl border border-white/10 bg-black/20 p-4"><div className="flex items-center justify-between gap-3"><p className="font-black text-white">{name}</p><span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-black text-cyan-200">{state}</span></div><p className="mt-1 font-mono text-xs text-slate-500">{path}</p></div>)}</div>
-            </section>
-          </div>
-
-          <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[.05] p-6">
-            <h2 className="text-3xl font-black text-white">Audit feed</h2>
-            <p className="mt-1 text-slate-400">Administrative activity and module synchronization.</p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-6">{audit.map((e) => <div key={e.action} className="rounded-2xl border border-white/10 bg-black/20 p-4"><p className="font-black text-white">{e.action}</p><p className="mt-1 font-mono text-xs text-slate-500">{e.actor} · {e.at}</p></div>)}</div>
-            <Link href="/admin/activity" className="mt-5 inline-flex font-black text-cyan-300">Open activity →</Link>
+        <div className="mt-6 grid gap-5 xl:grid-cols-[1.12fr_.88fr]">
+          <section className="admin-panel p-6">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><p className="admin-mono text-[10px] uppercase tracking-[.18em] text-[var(--admin-cyan)]">CRM intake</p><h2 className="mt-2 text-3xl font-black text-[var(--admin-text)]">Contact requests</h2><p className="mt-2 text-sm text-[var(--admin-muted)]">Latest visible requests for accounts with CRM access.</p></div><Link href="/admin/contacts" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5">Open CRM</Link></div>
+            {loading && <div className="admin-skeleton h-36 rounded-2xl" aria-label="Loading contact requests" />}
+            {error && <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-6 text-red-200">{error}</div>}
+            {!loading && !error && contacts.length === 0 && <div className="rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface)] p-8 text-[var(--admin-muted)]"><b className="text-[var(--admin-text)]">No contact requests visible.</b><p className="mt-2 text-sm">New requests and assignments will appear here automatically.</p><Link href="/admin/contacts" className="mt-4 inline-flex text-sm font-black text-[var(--admin-cyan)]">Review CRM filters →</Link></div>}
+            <div className="grid gap-3">{contacts.slice(0, 4).map((contact) => <article key={contact.id} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-black text-[var(--admin-text)]">{contact.name}</h3><p className="text-sm text-[var(--admin-muted)]">{contact.email}{contact.company ? ` · ${contact.company}` : ''}</p></div><span className="rounded-full bg-cyan-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.12em] text-[var(--admin-cyan)]">{contact.status || 'new'}</span></div><p className="mt-3 line-clamp-2 text-sm text-[var(--admin-muted)]">{contact.message}</p></article>)}</div>
           </section>
+
+          <section className="admin-panel p-6">
+            <p className="admin-mono text-[10px] uppercase tracking-[.18em] text-[var(--admin-cyan)]">Connected modules</p>
+            <h2 className="mt-2 text-3xl font-black text-[var(--admin-text)]">Data surface</h2>
+            <p className="mt-2 text-sm text-[var(--admin-muted)]">Operational visibility of protected modules and queues.</p>
+            <div className="mt-6 grid gap-3">{apiSurface.map(([name, path, state]) => <div key={name} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4"><div className="flex items-center justify-between gap-3"><p className="font-black text-[var(--admin-text)]">{name}</p><span className="rounded-full bg-cyan-400/10 px-3 py-1 text-[10px] font-black text-[var(--admin-cyan)]">{state}</span></div><p className="admin-mono mt-2 text-[10px] text-[var(--admin-muted)]">{path}</p></div>)}</div>
+          </section>
+        </div>
+
+        <section className="admin-panel mt-6 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="admin-mono text-[10px] uppercase tracking-[.18em] text-[var(--admin-cyan)]">Activity preview</p><h2 className="mt-2 text-3xl font-black text-[var(--admin-text)]">Operational feed</h2></div><Link href="/admin/activity" className="text-sm font-black text-[var(--admin-cyan)]">Open complete audit →</Link></div>
+          <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{audit.map((event) => <div key={event.action} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4"><div className="flex items-start justify-between gap-3"><p className="font-black text-[var(--admin-text)]">{event.action}</p><span className={event.severity === 'warn' ? 'h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_14px_rgba(245,158,11,.8)]' : 'h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.7)]'} /></div><p className="admin-mono mt-2 text-[10px] text-[var(--admin-muted)]">{event.actor} · {event.at}</p></div>)}</div>
         </section>
       </div>
     </main>
